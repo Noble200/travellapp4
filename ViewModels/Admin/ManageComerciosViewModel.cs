@@ -21,6 +21,7 @@ namespace Allva.Desktop.ViewModels.Admin;
 /// - "Flotante" → "Flooter" en todo el código
 /// - Botón Activar/Desactivar para LOCALES (no comercios)
 /// - Carga de usuarios por local implementada
+/// - Corrección de NullReferenceException al ver detalles
 /// </summary>
 public partial class ManageComerciosViewModel : ObservableObject
 {
@@ -195,7 +196,7 @@ public partial class ManageComerciosViewModel : ObservableObject
             {
                 comercio.Locales = await CargarLocalesDelComercio(connection, comercio.IdComercio);
                 
-                // ✅ NUEVO: Cargar usuarios para cada local
+                // ✅ CRÍTICO: Cargar usuarios para cada local
                 foreach (var local in comercio.Locales)
                 {
                     local.Usuarios = await CargarUsuariosDelLocal(connection, local.IdLocal);
@@ -297,7 +298,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                 ModuloPackAlimentos = reader.GetBoolean(12),
                 ModuloBilletesAvion = reader.GetBoolean(13),
                 ModuloPackViajes = reader.GetBoolean(14),
-                Usuarios = new List<UserSimpleModel>() // Inicializar lista vacía
+                Usuarios = new List<UserSimpleModel>() // ✅ Inicializar lista vacía
             });
         }
         
@@ -305,7 +306,7 @@ public partial class ManageComerciosViewModel : ObservableObject
     }
 
     /// <summary>
-    /// ✅ NUEVO MÉTODO: Cargar usuarios de un local específico
+    /// ✅ CRÍTICO: Cargar usuarios de un local específico
     /// </summary>
     private async Task<List<UserSimpleModel>> CargarUsuariosDelLocal(NpgsqlConnection connection, int idLocal)
     {
@@ -384,13 +385,44 @@ public partial class ManageComerciosViewModel : ObservableObject
     [RelayCommand]
     private async Task VerDetallesComercio(ComercioModel comercio)
     {
-        ComercioSeleccionado = comercio;
-        TituloPanelDerecho = $"Detalles: {comercio.NombreComercio}";
-        MostrarFormulario = false;
-        MostrarPanelDerecho = true;
-        
-        // Cargar archivos del comercio seleccionado
-        await CargarArchivosComercio(comercio.IdComercio);
+        try
+        {
+            Cargando = true;
+            
+            // ✅ CRÍTICO: Recargar el comercio con todos sus datos actualizados
+            using var connection = new NpgsqlConnection(ConnectionString);
+            await connection.OpenAsync();
+            
+            // Recargar locales del comercio
+            var localesActualizados = await CargarLocalesDelComercio(connection, comercio.IdComercio);
+            
+            // Cargar usuarios para cada local
+            foreach (var local in localesActualizados)
+            {
+                local.Usuarios = await CargarUsuariosDelLocal(connection, local.IdLocal);
+            }
+            
+            comercio.Locales = localesActualizados;
+            
+            ComercioSeleccionado = comercio;
+            TituloPanelDerecho = $"Detalles: {comercio.NombreComercio}";
+            MostrarFormulario = false;
+            MostrarPanelDerecho = true;
+            
+            // Cargar archivos del comercio seleccionado
+            await CargarArchivosComercio(comercio.IdComercio);
+        }
+        catch (Exception ex)
+        {
+            MensajeExito = $"❌ Error al cargar detalles: {ex.Message}";
+            MostrarMensajeExito = true;
+            await Task.Delay(3000);
+            MostrarMensajeExito = false;
+        }
+        finally
+        {
+            Cargando = false;
+        }
     }
 
     [RelayCommand]
@@ -506,14 +538,14 @@ public partial class ManageComerciosViewModel : ObservableObject
                 var queryLocal = @"
                     INSERT INTO locales (
                         id_comercio, codigo_local, nombre_local, direccion, local_numero,
-                        escalera, piso, telefono, email, observaciones,
+                        escalera, piso, telefono, email, observaciones, numero_usuarios_max,
                         activo, modulo_divisas, modulo_pack_alimentos, 
                         modulo_billetes_avion, modulo_pack_viajes,
                         pais, codigo_postal, tipo_via, comision_divisas
                     )
                     VALUES (
                         @IdComercio, @CodigoLocal, @NombreLocal, @Direccion, @LocalNumero,
-                        @Escalera, @Piso, @Telefono, @Email, @Observaciones,
+                        @Escalera, @Piso, @Telefono, @Email, @Observaciones, @NumeroUsuariosMax,
                         @Activo, @ModuloDivisas, @ModuloPackAlimentos,
                         @ModuloBilletesAvion, @ModuloPackViajes,
                         @Pais, @CodigoPostal, @TipoVia, @ComisionDivisas
@@ -533,6 +565,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                     string.IsNullOrWhiteSpace(local.Telefono) ? DBNull.Value : local.Telefono);
                 cmdLocal.Parameters.AddWithValue("@Email", 
                     string.IsNullOrWhiteSpace(local.Email) ? DBNull.Value : local.Email);
+                cmdLocal.Parameters.AddWithValue("@NumeroUsuariosMax", local.NumeroUsuariosMax);
                 cmdLocal.Parameters.AddWithValue("@Observaciones", 
                     string.IsNullOrWhiteSpace(local.Observaciones) ? DBNull.Value : local.Observaciones);
                 cmdLocal.Parameters.AddWithValue("@Activo", local.Activo);
@@ -632,14 +665,14 @@ public partial class ManageComerciosViewModel : ObservableObject
                 var queryUpsert = @"
                     INSERT INTO locales (
                         id_comercio, codigo_local, nombre_local, direccion, local_numero,
-                        escalera, piso, telefono, email, observaciones,
+                        escalera, piso, telefono, email, observaciones, numero_usuarios_max,
                         activo, modulo_divisas, modulo_pack_alimentos, 
                         modulo_billetes_avion, modulo_pack_viajes,
                         pais, codigo_postal, tipo_via, comision_divisas
                     )
                     VALUES (
                         @IdComercio, @CodigoLocal, @NombreLocal, @Direccion, @LocalNumero,
-                        @Escalera, @Piso, @Telefono, @Email, @Observaciones,
+                        @Escalera, @Piso, @Telefono, @Email, @Observaciones, @NumeroUsuariosMax,
                         @Activo, @ModuloDivisas, @ModuloPackAlimentos,
                         @ModuloBilletesAvion, @ModuloPackViajes,
                         @Pais, @CodigoPostal, @TipoVia, @ComisionDivisas
@@ -654,6 +687,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                         telefono = EXCLUDED.telefono,
                         email = EXCLUDED.email,
                         observaciones = EXCLUDED.observaciones,
+                        numero_usuarios_max = EXCLUDED.numero_usuarios_max,
                         activo = EXCLUDED.activo,
                         modulo_divisas = EXCLUDED.modulo_divisas,
                         modulo_pack_alimentos = EXCLUDED.modulo_pack_alimentos,
@@ -678,6 +712,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                     string.IsNullOrWhiteSpace(local.Telefono) ? DBNull.Value : local.Telefono);
                 cmdLocal.Parameters.AddWithValue("@Email", 
                     string.IsNullOrWhiteSpace(local.Email) ? DBNull.Value : local.Email);
+                cmdLocal.Parameters.AddWithValue("@NumeroUsuariosMax", local.NumeroUsuariosMax);
                 cmdLocal.Parameters.AddWithValue("@Observaciones", 
                     string.IsNullOrWhiteSpace(local.Observaciones) ? DBNull.Value : local.Observaciones);
                 cmdLocal.Parameters.AddWithValue("@Activo", local.Activo);
@@ -802,6 +837,54 @@ public partial class ManageComerciosViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// ✅ NUEVO: Comando para cambiar estado desde la vista de detalles
+    /// </summary>
+    [RelayCommand]
+    private async Task CambiarEstadoLocalDetalle(LocalSimpleModel local)
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(ConnectionString);
+            await connection.OpenAsync();
+
+            var nuevoEstado = !local.Activo;
+            var query = "UPDATE locales SET activo = @Activo WHERE codigo_local = @CodigoLocal";
+            
+            using var cmd = new NpgsqlCommand(query, connection);
+            cmd.Parameters.AddWithValue("@Activo", nuevoEstado);
+            cmd.Parameters.AddWithValue("@CodigoLocal", local.CodigoLocal);
+            
+            await cmd.ExecuteNonQueryAsync();
+
+            local.Activo = nuevoEstado;
+
+            MensajeExito = $"✓ Local {local.NombreLocal} marcado como {(nuevoEstado ? "Activo" : "Inactivo")}";
+            MostrarMensajeExito = true;
+            await Task.Delay(2000);
+            MostrarMensajeExito = false;
+        }
+        catch (Exception ex)
+        {
+            MensajeExito = $"❌ Error al cambiar estado: {ex.Message}";
+            MostrarMensajeExito = true;
+            await Task.Delay(3000);
+            MostrarMensajeExito = false;
+        }
+    }
+
+    /// <summary>
+    /// ✅ NUEVO: Toggle para expandir/contraer detalles del local
+    /// </summary>
+    [RelayCommand]
+    private void ToggleLocalDetalles(LocalSimpleModel local)
+    {
+        if (local != null)
+        {
+            local.MostrarDetalles = !local.MostrarDetalles;
+        }
+    }
+
     // ============================================
     // COMANDOS - FILTROS (MEJORADOS)
     // ============================================
@@ -877,6 +960,7 @@ public partial class ManageComerciosViewModel : ObservableObject
             Pais = string.Empty,
             CodigoPostal = string.Empty,
             TipoVia = string.Empty,
+            NumeroUsuariosMax = 10,
             ModuloDivisas = false,
             ModuloPackAlimentos = false,
             ModuloBilletesAvion = false,
@@ -1189,7 +1273,12 @@ public partial class ManageComerciosViewModel : ObservableObject
                 ModuloDivisas = local.ModuloDivisas,
                 ModuloPackAlimentos = local.ModuloPackAlimentos,
                 ModuloBilletesAvion = local.ModuloBilletesAvion,
-                ModuloPackViajes = local.ModuloPackViajes
+                ModuloPackViajes = local.ModuloPackViajes,
+                Pais = string.Empty,
+                CodigoPostal = string.Empty,
+                TipoVia = string.Empty,
+                NumeroUsuariosMax = 10,
+                ComisionDivisas = 0
             });
         }
         

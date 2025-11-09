@@ -8,6 +8,8 @@
              x:Class="Allva.Desktop.Views.Admin.ManageComerciosView"
              x:DataType="vm:ManageComerciosViewModel">
 
+    <!-- NO necesitamos declarar converters aquí porque ya están en App.axaml como recursos globales -->
+
     <UserControl.Styles>
         <!-- Estilo para botón primario -->
         <Style Selector="Button.btn-primary">
@@ -471,8 +473,8 @@
                                                         Margin="0,0,0,12">
                                                     <StackPanel Spacing="12">
                                                         
-                                                        <!-- Header: Código y nombre -->
-                                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                                        <!-- Header: Código, nombre y controles -->
+                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
                                                             <Border Grid.Column="0" 
                                                                     Background="#003366" 
                                                                     CornerRadius="6" 
@@ -489,94 +491,127 @@
                                                                        Foreground="#003366"
                                                                        VerticalAlignment="Center"/>
                                                             
-                                                            <!-- Badge de estado -->
-                                                            <Border Grid.Column="2"
-                                                                    Background="{Binding Activo, Converter={StaticResource EstadoActivoColorConverter}}" 
-                                                                    CornerRadius="6" Padding="10,4">
+                                                            <!-- Botón Expandir/Contraer -->
+                                                            <Button Grid.Column="2"
+                                                                    Background="Transparent"
+                                                                    BorderThickness="0"
+                                                                    Padding="8"
+                                                                    Margin="0,0,8,0"
+                                                                    Cursor="Hand"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:ManageComerciosViewModel)DataContext).ToggleLocalDetallesCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <TextBlock Text="{Binding MostrarDetalles, Converter={StaticResource BoolToExpandIconConverter}}" 
+                                                                           FontSize="18" 
+                                                                           Foreground="#003366"/>
+                                                            </Button>
+                                                            
+                                                            <!-- Badge de estado (funcional) -->
+                                                            <Button Grid.Column="3"
+                                                                    Background="{Binding Activo, Converter={StaticResource EstadoActivoColorConverter}}"
+                                                                    Foreground="White"
+                                                                    FontWeight="Bold"
+                                                                    FontSize="11"
+                                                                    Padding="12,6"
+                                                                    BorderThickness="0"
+                                                                    CornerRadius="6"
+                                                                    Cursor="Hand"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:ManageComerciosViewModel)DataContext).CambiarEstadoLocalDetalleCommand}"
+                                                                    CommandParameter="{Binding}">
                                                                 <TextBlock Text="{Binding Activo, Converter={StaticResource EstadoTextoMayusculaConverter}}" 
-                                                                           FontSize="12" FontWeight="Bold" 
-                                                                           Foreground="White"/>
-                                                            </Border>
+                                                                           FontSize="11" FontWeight="Bold"/>
+                                                            </Button>
                                                         </Grid>
 
-                                                        <!-- Dirección -->
-                                                        <StackPanel>
-                                                            <TextBlock Text="Dirección" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
-                                                            <TextBlock FontSize="14" Foreground="#333" Margin="0,4,0,0">
-                                                                <Run Text="{Binding Direccion}"/>
-                                                                <Run Text=", Nº "/><Run Text="{Binding LocalNumero}"/>
-                                                            </TextBlock>
-                                                        </StackPanel>
-
-                                                        <!-- Contacto -->
-                                                        <Grid ColumnDefinitions="*,*">
-                                                            <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                                                <TextBlock Text="Teléfono" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
-                                                                <TextBlock Text="{Binding Telefono}" FontSize="14" Foreground="#333" Margin="0,4,0,0"/>
+                                                        <!-- Detalles expandibles del local -->
+                                                        <StackPanel IsVisible="{Binding MostrarDetalles}" Spacing="12">
+                                                            <!-- Dirección completa -->
+                                                            <StackPanel>
+                                                                <TextBlock Text="Dirección completa" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
+                                                                <TextBlock FontSize="14" Foreground="#333" Margin="0,4,0,0" TextWrapping="Wrap">
+                                                                    <Run Text="{Binding Direccion}"/>
+                                                                    <Run Text=", Nº "/><Run Text="{Binding LocalNumero}"/>
+                                                                    <Run Text="{Binding Escalera, StringFormat=' Esc. {0}', Converter={StaticResource NullToEmptyConverter}}"/>
+                                                                    <Run Text="{Binding Piso, StringFormat=' Piso {0}', Converter={StaticResource NullToEmptyConverter}}"/>
+                                                                </TextBlock>
                                                             </StackPanel>
-                                                            <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                                                <TextBlock Text="Email" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
-                                                                <TextBlock Text="{Binding Email}" FontSize="14" Foreground="#333" Margin="0,4,0,0"/>
-                                                            </StackPanel>
-                                                        </Grid>
 
-                                                        <!-- Usuarios en el local (solo conteo) -->
-                                                        <StackPanel>
-                                                            <TextBlock Text="Usuarios en este local" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
-                                                            <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
-                                                                <Border Grid.Column="0" Background="#e3f2fd" CornerRadius="4" Padding="12,6" Margin="0,0,4,0">
-                                                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                                                                        <TextBlock Text="👤" FontSize="16" VerticalAlignment="Center"/>
-                                                                        <TextBlock FontSize="16" FontWeight="Bold" Foreground="#003366" VerticalAlignment="Center">
-                                                                            <Run Text="{Binding CantidadUsuariosFijos}"/>
-                                                                        </TextBlock>
-                                                                        <TextBlock Text="Fijos" FontSize="12" Foreground="#666" VerticalAlignment="Center"/>
-                                                                    </StackPanel>
-                                                                </Border>
-                                                                <Border Grid.Column="1" Background="#fff3cd" CornerRadius="4" Padding="12,6" Margin="4,0,0,0">
-                                                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                                                                        <TextBlock Text="✈️" FontSize="16" VerticalAlignment="Center"/>
-                                                                        <TextBlock FontSize="16" FontWeight="Bold" Foreground="#856404" VerticalAlignment="Center">
-                                                                            <Run Text="{Binding CantidadUsuariosFlooter}"/>
-                                                                        </TextBlock>
-                                                                        <TextBlock Text="Flooter" FontSize="12" Foreground="#666" VerticalAlignment="Center"/>
-                                                                    </StackPanel>
-                                                                </Border>
+                                                            <!-- Contacto -->
+                                                            <Grid ColumnDefinitions="*,*">
+                                                                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                                                    <TextBlock Text="Teléfono" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
+                                                                    <TextBlock Text="{Binding Telefono}" FontSize="14" Foreground="#333" Margin="0,4,0,0"/>
+                                                                </StackPanel>
+                                                                <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                                                    <TextBlock Text="Email" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
+                                                                    <TextBlock Text="{Binding Email}" FontSize="14" Foreground="#333" Margin="0,4,0,0"/>
+                                                                </StackPanel>
                                                             </Grid>
-                                                        </StackPanel>
 
-                                                        <!-- Módulos activos -->
-                                                        <StackPanel>
-                                                            <TextBlock Text="Módulos habilitados" FontSize="11" Foreground="#666" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                                <Border Background="#ffc107" 
-                                                                        CornerRadius="4" Padding="8,4"
-                                                                        IsVisible="{Binding ModuloDivisas}">
-                                                                    <TextBlock Text="DIVISAS" 
-                                                                               FontSize="10" FontWeight="Bold" 
-                                                                               Foreground="White"/>
-                                                                </Border>
-                                                                <Border Background="#28a745" 
-                                                                        CornerRadius="4" Padding="8,4"
-                                                                        IsVisible="{Binding ModuloPackAlimentos}">
-                                                                    <TextBlock Text="ALIMENTOS" 
-                                                                               FontSize="10" FontWeight="Bold" 
-                                                                               Foreground="White"/>
-                                                                </Border>
-                                                                <Border Background="#007bff" 
-                                                                        CornerRadius="4" Padding="8,4"
-                                                                        IsVisible="{Binding ModuloBilletesAvion}">
-                                                                    <TextBlock Text="BILLETES" 
-                                                                               FontSize="10" FontWeight="Bold" 
-                                                                               Foreground="White"/>
-                                                                </Border>
-                                                                <Border Background="#6f42c1" 
-                                                                        CornerRadius="4" Padding="8,4"
-                                                                        IsVisible="{Binding ModuloPackViajes}">
-                                                                    <TextBlock Text="VIAJES" 
-                                                                               FontSize="10" FontWeight="Bold" 
-                                                                               Foreground="White"/>
-                                                                </Border>
+                                                            <!-- Observaciones (si existen) -->
+                                                            <StackPanel IsVisible="{Binding Observaciones, Converter={StaticResource NotEmptyConverter}}">
+                                                                <TextBlock Text="Observaciones" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
+                                                                <TextBlock Text="{Binding Observaciones}" 
+                                                                           FontSize="14" Foreground="#333" 
+                                                                           Margin="0,4,0,0" 
+                                                                           TextWrapping="Wrap"/>
+                                                            </StackPanel>
+
+                                                            <!-- Usuarios en el local (solo conteo, sin iconos) - CAMBIO: "Flotante" → "Flooter" -->
+                                                            <StackPanel>
+                                                                <TextBlock Text="Usuarios en este local" FontSize="11" Foreground="#666" FontWeight="SemiBold"/>
+                                                                <Grid ColumnDefinitions="*,*" Margin="0,4,0,0">
+                                                                    <Border Grid.Column="0" Background="#e3f2fd" CornerRadius="4" Padding="12,6" Margin="0,0,4,0">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                                                            <TextBlock FontSize="16" FontWeight="Bold" Foreground="#003366" VerticalAlignment="Center">
+                                                                                <Run Text="{Binding CantidadUsuariosFijos}"/>
+                                                                            </TextBlock>
+                                                                            <TextBlock Text="Fijos" FontSize="12" Foreground="#666" VerticalAlignment="Center"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                    <Border Grid.Column="1" Background="#fff3cd" CornerRadius="4" Padding="12,6" Margin="4,0,0,0">
+                                                                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                                                            <TextBlock FontSize="16" FontWeight="Bold" Foreground="#856404" VerticalAlignment="Center">
+                                                                                <Run Text="{Binding CantidadUsuariosFlooter}"/>
+                                                                            </TextBlock>
+                                                                            <TextBlock Text="Flooter" FontSize="12" Foreground="#666" VerticalAlignment="Center"/>
+                                                                        </StackPanel>
+                                                                    </Border>
+                                                                </Grid>
+                                                            </StackPanel>
+
+                                                            <!-- Módulos activos -->
+                                                            <StackPanel>
+                                                                <TextBlock Text="Módulos habilitados" FontSize="11" Foreground="#666" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                    <Border Background="#ffc107" 
+                                                                            CornerRadius="4" Padding="8,4"
+                                                                            IsVisible="{Binding ModuloDivisas}">
+                                                                        <TextBlock Text="DIVISAS" 
+                                                                                   FontSize="10" FontWeight="Bold" 
+                                                                                   Foreground="White"/>
+                                                                    </Border>
+                                                                    <Border Background="#28a745" 
+                                                                            CornerRadius="4" Padding="8,4"
+                                                                            IsVisible="{Binding ModuloPackAlimentos}">
+                                                                        <TextBlock Text="ALIMENTOS" 
+                                                                                   FontSize="10" FontWeight="Bold" 
+                                                                                   Foreground="White"/>
+                                                                    </Border>
+                                                                    <Border Background="#007bff" 
+                                                                            CornerRadius="4" Padding="8,4"
+                                                                            IsVisible="{Binding ModuloBilletesAvion}">
+                                                                        <TextBlock Text="BILLETES" 
+                                                                                   FontSize="10" FontWeight="Bold" 
+                                                                                   Foreground="White"/>
+                                                                    </Border>
+                                                                    <Border Background="#6f42c1" 
+                                                                            CornerRadius="4" Padding="8,4"
+                                                                            IsVisible="{Binding ModuloPackViajes}">
+                                                                        <TextBlock Text="VIAJES" 
+                                                                                   FontSize="10" FontWeight="Bold" 
+                                                                                   Foreground="White"/>
+                                                                    </Border>
+                                                                </StackPanel>
                                                             </StackPanel>
                                                         </StackPanel>
 

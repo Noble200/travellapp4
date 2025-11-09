@@ -8,14 +8,16 @@
         <FluentTheme />
     </Application.Styles>
 
-    <!-- Recursos Globales -->
+    <!-- ===================================== -->
+    <!-- RECURSOS GLOBALES DE LA APLICACIÓN -->
+    <!-- ===================================== -->
     <Application.Resources>
         <ResourceDictionary>
+            
             <!-- ===================================== -->
-            <!-- CONVERTERS - TODOS LOS NECESARIOS -->
+            <!-- CONVERTERS GENERALES (Converters.cs) -->
             <!-- ===================================== -->
             <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
-            <converters:BoolToFormTitleConverter x:Key="BoolToFormTitleConverter"/>
             <converters:NotEmptyConverter x:Key="NotEmptyConverter"/>
             <converters:GreaterThanZeroConverter x:Key="GreaterThanZeroConverter"/>
             <converters:EqualToZeroConverter x:Key="EqualToZeroConverter"/>
@@ -23,9 +25,14 @@
             <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <converters:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter"/>
+            <converters:BoolToExpandIconConverter x:Key="BoolToExpandIconConverter"/>
             <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
+            <converters:NullToEmptyConverter x:Key="NullToEmptyConverter"/>
+            <converters:BoolToFormTitleConverter x:Key="BoolToFormTitleConverter"/>
             
-            <!-- NUEVOS: Converters para Gestión de Comercios -->
+            <!-- ===================================== -->
+            <!-- CONVERTERS DE ESTADO (EstadoComercioConverters.cs) -->
+            <!-- ===================================== -->
             <converters:EstadoActivoColorConverter x:Key="EstadoActivoColorConverter"/>
             <converters:EstadoTextoMayusculaConverter x:Key="EstadoTextoMayusculaConverter"/>
 
@@ -33,26 +40,18 @@
             <!-- COLORES CORPORATIVOS ALLVA -->
             <!-- ===================================== -->
             <SolidColorBrush x:Key="PrimaryBlue">#0b5394</SolidColorBrush>
+            <SolidColorBrush x:Key="DarkBlue">#003366</SolidColorBrush>
             <SolidColorBrush x:Key="PrimaryYellow">#FFD966</SolidColorBrush>
             <SolidColorBrush x:Key="AccentYellow">#FFC600</SolidColorBrush>
-            <SolidColorBrush x:Key="SuccessGreen">#4caf50</SolidColorBrush>
-            <SolidColorBrush x:Key="DangerRed">#d32f2f</SolidColorBrush>
-            <SolidColorBrush x:Key="WarningOrange">#ff9800</SolidColorBrush>
-            
-            <!-- Textos -->
-            <SolidColorBrush x:Key="TextPrimary">#333333</SolidColorBrush>
-            <SolidColorBrush x:Key="TextSecondary">#666666</SolidColorBrush>
-            <SolidColorBrush x:Key="TextTertiary">#999999</SolidColorBrush>
-            
-            <!-- Bordes -->
-            <SolidColorBrush x:Key="BorderLight">#cccccc</SolidColorBrush>
-            <SolidColorBrush x:Key="BorderMedium">#e0e0e0</SolidColorBrush>
-            
-            <!-- Fondos -->
-            <SolidColorBrush x:Key="BackgroundLight">#f3f3f3</SolidColorBrush>
-            <SolidColorBrush x:Key="BackgroundMedium">#f8f8f8</SolidColorBrush>
-            <SolidColorBrush x:Key="BackgroundWhite">#FFFFFF</SolidColorBrush>
+            <SolidColorBrush x:Key="DarkGray">#595959</SolidColorBrush>
+            <SolidColorBrush x:Key="LightGray">#f3f3f3</SolidColorBrush>
+            <SolidColorBrush x:Key="White">#ffffff</SolidColorBrush>
+            <SolidColorBrush x:Key="SuccessGreen">#28a745</SolidColorBrush>
+            <SolidColorBrush x:Key="DangerRed">#dc3545</SolidColorBrush>
+            <SolidColorBrush x:Key="WarningYellow">#ffc107</SolidColorBrush>
+            <SolidColorBrush x:Key="InfoBlue">#17a2b8</SolidColorBrush>
+
         </ResourceDictionary>
     </Application.Resources>
-
+    
 </Application>

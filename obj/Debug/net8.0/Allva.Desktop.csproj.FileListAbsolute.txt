@@ -223,3 +223,6 @@ C:\Users\Ruso\Desktop\AllvaSystem - copia - copia - copia\src\Allva.Desktop\obj\
 C:\Users\Ruso\Desktop\AllvaSystem - copia - copia - copia\src\Allva.Desktop\obj\Debug\net8.0\Allva.Desktop.csproj.CopyComplete
 C:\Users\Ruso\Desktop\AllvaSystem - copia - copia - copia\src\Allva.Desktop\obj\Debug\net8.0\Allva.Desktop.genruntimeconfig.cache
 C:\Users\Ruso\Desktop\AllvaSystem - copia - copia - copia\src\Allva.Desktop\obj\Debug\net8.0\ref\Allva.Desktop.dll
+C:\Users\Ruso\Desktop\AllvaSystem - copia - copia - copia\src\Allva.Desktop\obj\Debug\net8.0\Allva.Desktop.dll
+C:\Users\Ruso\Desktop\AllvaSystem - copia - copia - copia\src\Allva.Desktop\obj\Debug\net8.0\refint\Allva.Desktop.dll
+C:\Users\Ruso\Desktop\AllvaSystem - copia - copia - copia\src\Allva.Desktop\obj\Debug\net8.0\Allva.Desktop.pdb

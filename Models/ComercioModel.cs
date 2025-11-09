@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Allva.Desktop.Models.Admin;
 
@@ -118,8 +119,9 @@ public class ComercioModel
 /// <summary>
 /// Modelo simplificado de Local para mostrar en la lista de comercios
 /// ACTUALIZADO: Con todos los campos de la base de datos + permisos individuales + lista de usuarios
+/// Ahora hereda de ObservableObject para notificar cambios de propiedades
 /// </summary>
-public class LocalSimpleModel
+public partial class LocalSimpleModel : ObservableObject
 {
     public int IdLocal { get; set; }
     public string CodigoLocal { get; set; } = string.Empty;
@@ -146,8 +148,16 @@ public class LocalSimpleModel
     // ESTADO Y USUARIOS
     // ============================================
     
-    public bool Activo { get; set; } = true;
+    [ObservableProperty]
+    private bool _activo = true;
+    
     public int NumeroUsuarios { get; set; } = 0;
+    
+    /// <summary>
+    /// ✅ NUEVO: Controla si se muestran los detalles expandidos del local
+    /// </summary>
+    [ObservableProperty]
+    private bool _mostrarDetalles = false;
     
     /// <summary>
     /// ✅ NUEVO: Lista de usuarios asignados a este local

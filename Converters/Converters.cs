@@ -1,13 +1,13 @@
-using Avalonia.Data.Converters;
-using Avalonia.Media;
 using System;
 using System.Globalization;
+using Avalonia.Data.Converters;
+using Avalonia.Media;
 
 namespace Allva.Desktop.Converters;
 
 // ===================================
-// CONVERTERS PARA ALLVA DESKTOP
-// SIN BoolToFormTitleConverter (ya existe en tu código)
+// CONVERTERS GENERALES PARA ALLVA DESKTOP
+// LOS CONVERTERS DE ESTADO ESTÁN EN EstadoComercioConverters.cs
 // ===================================
 
 /// <summary>
@@ -20,7 +20,7 @@ public class BoolToColorConverter : IValueConverter
     {
         if (value is bool boolValue)
         {
-            return boolValue ? Brush.Parse("#4caf50") : Brush.Parse("#d32f2f");
+            return Brush.Parse(boolValue ? "#4caf50" : "#d32f2f");
         }
         return Brush.Parse("#d32f2f");
     }
@@ -127,6 +127,27 @@ public class InverseBoolConverter : IValueConverter
 }
 
 /// <summary>
+/// Convierte bool a visibilidad
+/// true = visible, false = collapsed
+/// </summary>
+public class BoolToVisibilityConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue)
+        {
+            return boolValue;
+        }
+        return false;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
 /// Convierte null a true (para IsVisible)
 /// null → true, no-null → false
 /// </summary>
@@ -152,6 +173,87 @@ public class NotNullToVisibilityConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         return value != null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Convierte un booleano a icono de expandir/contraer
+/// true = ▼ (expandido), false = ▶ (contraído)
+/// </summary>
+public class BoolToExpandIconConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool mostrarDetalles)
+        {
+            return mostrarDetalles ? "▼" : "▶";
+        }
+
+        return "▶";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Convierte bool a icono genérico
+/// true = ✓, false = ✗
+/// </summary>
+public class BoolToIconConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool boolValue)
+        {
+            return boolValue ? "✓" : "✗";
+        }
+        return "?";
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Convierte un string nullable a string vacío si es null
+/// Útil para mostrar valores opcionales sin mostrar "null"
+/// </summary>
+public class NullToEmptyConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value?.ToString() ?? string.Empty;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// Convierte el modo de creación a texto del botón
+/// true = "CREAR COMERCIO", false = "GUARDAR CAMBIOS"
+/// </summary>
+public class BoolToFormTitleConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool esModoCreacion)
+        {
+            return esModoCreacion ? "CREAR COMERCIO" : "GUARDAR CAMBIOS";
+        }
+        return "GUARDAR";
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
