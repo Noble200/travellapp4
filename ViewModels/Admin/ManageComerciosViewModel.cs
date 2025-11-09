@@ -17,8 +17,10 @@ namespace Allva.Desktop.ViewModels.Admin;
 
 /// <summary>
 /// ViewModel para la gestión de comercios en el panel de administración
-/// VERSIÓN ACTUALIZADA CON FUNCIONALIDAD COMPLETA DE ARCHIVOS
-/// Usa los modelos LocalSimpleModel y ComercioModel EXACTOS del proyecto
+/// VERSIÓN MEJORADA CON:
+/// - Filtro por módulos
+/// - Sistema de códigos de local automático
+/// - Comandos mejorados
 /// </summary>
 public partial class ManageComerciosViewModel : ObservableObject
 {
@@ -79,7 +81,7 @@ public partial class ManageComerciosViewModel : ObservableObject
     [ObservableProperty]
     private string _tituloFormulario = "Crear Comercio";
 
-    // Campos del formulario de comercio (según ComercioModel REAL)
+    // Campos del formulario de comercio (mantener todos para compatibilidad con BD)
     [ObservableProperty]
     private string _formNombreComercio = string.Empty;
 
@@ -107,22 +109,33 @@ public partial class ManageComerciosViewModel : ObservableObject
     [ObservableProperty]
     private bool _formActivo = true;
 
-    // Locales del comercio (usando LocalFormModel REAL que ya existe)
+    // Locales del comercio
     [ObservableProperty]
     private ObservableCollection<LocalFormModel> _localesComercio = new();
 
     // ============================================
-    // PROPIEDADES PARA FILTROS
+    // PROPIEDADES PARA FILTROS (MEJORADAS)
     // ============================================
 
     [ObservableProperty]
     private string _filtroBusqueda = string.Empty;
 
     [ObservableProperty]
-    private string _filtroPais = "Todos";
+    private string _filtroEstado = "Todos";
+    
+    // NUEVO: Filtro por módulo
+    [ObservableProperty]
+    private string _filtroModulo = "Todos";
 
     [ObservableProperty]
-    private string _filtroEstado = "Todos";
+    private ObservableCollection<string> _modulosDisponibles = new()
+    {
+        "Todos",
+        "Compra divisa",
+        "Packs de alimentos",
+        "Billetes de avión",
+        "Packs de viajes"
+    };
 
     [ObservableProperty]
     private ObservableCollection<string> _paisesDisponibles = new();
@@ -134,9 +147,6 @@ public partial class ManageComerciosViewModel : ObservableObject
     [ObservableProperty]
     private ObservableCollection<ArchivoComercioModel> _archivosComercioSeleccionado = new();
 
-    /// <summary>
-    /// Lista de rutas de archivos que se subirán al crear/editar el comercio
-    /// </summary>
     [ObservableProperty]
     private ObservableCollection<string> _archivosParaSubir = new();
 
@@ -161,8 +171,8 @@ public partial class ManageComerciosViewModel : ObservableObject
 
     public ManageComerciosViewModel()
     {
-        // Cargar datos desde la base de datos
         _ = CargarDatosDesdeBaseDatos();
+        _ = InicializarTablaCorrelativos();
     }
 
     // ============================================
@@ -183,22 +193,16 @@ public partial class ManageComerciosViewModel : ObservableObject
             Comercios.Clear();
             foreach (var comercio in comercios)
             {
-                // Cargar locales del comercio CON PERMISOS
                 comercio.Locales = await CargarLocalesDelComercio(connection, comercio.IdComercio);
-                
-                // Contar usuarios
                 comercio.TotalUsuarios = await ContarUsuariosDelComercio(connection, comercio.IdComercio);
-                
                 Comercios.Add(comercio);
             }
 
-            // Actualizar contadores
             OnPropertyChanged(nameof(TotalComercios));
             OnPropertyChanged(nameof(ComerciosActivos));
             OnPropertyChanged(nameof(ComerciosInactivos));
             OnPropertyChanged(nameof(TotalLocales));
             
-            // Inicializar filtros
             await InicializarFiltros();
         }
         catch (Exception ex)
@@ -254,7 +258,6 @@ public partial class ManageComerciosViewModel : ObservableObject
     {
         var locales = new List<LocalSimpleModel>();
         
-        // Usar los campos REALES de LocalSimpleModel
         var query = @"SELECT id_local, codigo_local, nombre_local, direccion, local_numero,
                              escalera, piso, telefono, email, observaciones,
                              numero_usuarios_max, activo,
@@ -262,7 +265,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                              modulo_billetes_avion, modulo_pack_viajes
                       FROM locales 
                       WHERE id_comercio = @IdComercio
-                      ORDER BY nombre_local";
+                      ORDER BY codigo_local";
         
         using var cmd = new NpgsqlCommand(query, connection);
         cmd.Parameters.AddWithValue("@IdComercio", idComercio);
@@ -346,7 +349,6 @@ public partial class ManageComerciosViewModel : ObservableObject
         MostrarFormulario = false;
         MostrarPanelDerecho = true;
         
-        // Cargar archivos del comercio
         await CargarArchivosComercio(comercio.IdComercio);
     }
 
@@ -367,7 +369,6 @@ public partial class ManageComerciosViewModel : ObservableObject
     [RelayCommand]
     private async Task GuardarComercio()
     {
-        // Validar formulario
         if (!ValidarFormulario(out string mensajeError))
         {
             MensajeExito = $"⚠️ {mensajeError}";
@@ -392,13 +393,9 @@ public partial class ManageComerciosViewModel : ObservableObject
                 MensajeExito = "✓ Comercio creado correctamente";
             }
 
-            // Recargar datos
             await CargarDatosDesdeBaseDatos();
-
-            // Cerrar panel
             CerrarPanelDerecho();
 
-            // Mostrar mensaje de éxito
             MostrarMensajeExito = true;
             await Task.Delay(3000);
             MostrarMensajeExito = false;
@@ -425,7 +422,7 @@ public partial class ManageComerciosViewModel : ObservableObject
         
         try
         {
-            // 1. Insertar comercio principal (con TODOS los campos del modelo real)
+            // 1. Insertar comercio principal
             var queryComercio = @"
                 INSERT INTO comercios (
                     nombre_comercio, nombre_srl, direccion_central, 
@@ -455,34 +452,30 @@ public partial class ManageComerciosViewModel : ObservableObject
             
             var idComercio = Convert.ToInt32(await cmdComercio.ExecuteScalarAsync());
             
-            // 2. Insertar locales asociados (con TODOS los campos del modelo real)
+            // 2. Insertar locales
             foreach (var local in LocalesComercio)
             {
                 var queryLocal = @"
                     INSERT INTO locales (
-                        id_comercio, codigo_local, nombre_local, 
-                        pais, codigo_postal, tipo_via, direccion, local_numero,
-                        escalera, piso, telefono, email, numero_usuarios_max,
-                        observaciones, activo, modulo_divisas, modulo_pack_alimentos,
-                        modulo_billetes_avion, modulo_pack_viajes, comision_divisas
+                        id_comercio, codigo_local, nombre_local, direccion, local_numero,
+                        escalera, piso, telefono, email, numero_usuarios_max, observaciones,
+                        activo, modulo_divisas, modulo_pack_alimentos, 
+                        modulo_billetes_avion, modulo_pack_viajes,
+                        pais, codigo_postal, tipo_via, comision_divisas
                     )
                     VALUES (
-                        @IdComercio, @CodigoLocal, @NombreLocal,
-                        @Pais, @CodigoPostal, @TipoVia, @Direccion, @LocalNumero,
-                        @Escalera, @Piso, @Telefono, @Email, @NumeroUsuariosMax,
-                        @Observaciones, @Activo, @ModuloDivisas, @ModuloPackAlimentos,
-                        @ModuloBilletesAvion, @ModuloPackViajes, @ComisionDivisas
+                        @IdComercio, @CodigoLocal, @NombreLocal, @Direccion, @LocalNumero,
+                        @Escalera, @Piso, @Telefono, @Email, @NumeroUsuariosMax, @Observaciones,
+                        @Activo, @ModuloDivisas, @ModuloPackAlimentos,
+                        @ModuloBilletesAvion, @ModuloPackViajes,
+                        @Pais, @CodigoPostal, @TipoVia, @ComisionDivisas
                     )";
                 
                 using var cmdLocal = new NpgsqlCommand(queryLocal, connection, transaction);
                 cmdLocal.Parameters.AddWithValue("@IdComercio", idComercio);
                 cmdLocal.Parameters.AddWithValue("@CodigoLocal", local.CodigoLocal);
                 cmdLocal.Parameters.AddWithValue("@NombreLocal", local.NombreLocal);
-                cmdLocal.Parameters.AddWithValue("@Pais", local.Pais ?? string.Empty);
-                cmdLocal.Parameters.AddWithValue("@CodigoPostal", local.CodigoPostal ?? string.Empty);
-                cmdLocal.Parameters.AddWithValue("@TipoVia", local.TipoVia ?? string.Empty);
-                cmdLocal.Parameters.AddWithValue("@Direccion", local.Direccion ?? string.Empty);
-                cmdLocal.Parameters.AddWithValue("@Direccion", local.Direccion ?? string.Empty);
+                cmdLocal.Parameters.AddWithValue("@Direccion", local.Direccion);
                 cmdLocal.Parameters.AddWithValue("@LocalNumero", local.LocalNumero ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@Escalera", 
                     string.IsNullOrWhiteSpace(local.Escalera) ? DBNull.Value : local.Escalera);
@@ -500,12 +493,17 @@ public partial class ManageComerciosViewModel : ObservableObject
                 cmdLocal.Parameters.AddWithValue("@ModuloPackAlimentos", local.ModuloPackAlimentos);
                 cmdLocal.Parameters.AddWithValue("@ModuloBilletesAvion", local.ModuloBilletesAvion);
                 cmdLocal.Parameters.AddWithValue("@ModuloPackViajes", local.ModuloPackViajes);
+                cmdLocal.Parameters.AddWithValue("@Pais", local.Pais ?? string.Empty);
+                cmdLocal.Parameters.AddWithValue("@CodigoPostal", local.CodigoPostal ?? string.Empty);
+                cmdLocal.Parameters.AddWithValue("@TipoVia", local.TipoVia ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@ComisionDivisas", local.ComisionDivisas);
                 
                 await cmdLocal.ExecuteNonQueryAsync();
             }
             
-            // 3. Subir archivos si hay
+            await transaction.CommitAsync();
+            
+            // 3. Subir archivos
             if (ArchivosParaSubir.Any())
             {
                 foreach (var rutaArchivo in ArchivosParaSubir)
@@ -517,12 +515,9 @@ public partial class ManageComerciosViewModel : ObservableObject
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error subiendo archivo {rutaArchivo}: {ex.Message}");
-                        // Continuar con los demás archivos aunque uno falle
                     }
                 }
             }
-            
-            await transaction.CommitAsync();
         }
         catch
         {
@@ -533,8 +528,6 @@ public partial class ManageComerciosViewModel : ObservableObject
 
     private async Task ActualizarComercio()
     {
-        if (ComercioSeleccionado == null) return;
-        
         using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
         
@@ -542,10 +535,10 @@ public partial class ManageComerciosViewModel : ObservableObject
         
         try
         {
-            // 1. Actualizar comercio principal
+            // 1. Actualizar comercio
             var queryComercio = @"
-                UPDATE comercios SET
-                    nombre_comercio = @NombreComercio,
+                UPDATE comercios 
+                SET nombre_comercio = @NombreComercio,
                     nombre_srl = @NombreSrl,
                     direccion_central = @Direccion,
                     numero_contacto = @Telefono,
@@ -558,6 +551,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                 WHERE id_comercio = @IdComercio";
             
             using var cmdComercio = new NpgsqlCommand(queryComercio, connection, transaction);
+            cmdComercio.Parameters.AddWithValue("@IdComercio", ComercioSeleccionado!.IdComercio);
             cmdComercio.Parameters.AddWithValue("@NombreComercio", FormNombreComercio);
             cmdComercio.Parameters.AddWithValue("@NombreSrl", FormNombreSrl ?? string.Empty);
             cmdComercio.Parameters.AddWithValue("@Direccion", FormDireccionCentral ?? string.Empty);
@@ -569,38 +563,66 @@ public partial class ManageComerciosViewModel : ObservableObject
             cmdComercio.Parameters.AddWithValue("@Comision", FormPorcentajeComisionDivisas);
             cmdComercio.Parameters.AddWithValue("@Activo", FormActivo);
             cmdComercio.Parameters.AddWithValue("@FechaModificacion", DateTime.Now);
-            cmdComercio.Parameters.AddWithValue("@IdComercio", ComercioSeleccionado.IdComercio);
             
             await cmdComercio.ExecuteNonQueryAsync();
             
-            // 2. Eliminar locales existentes y reinsertar
-            var queryDeleteLocales = "DELETE FROM locales WHERE id_comercio = @IdComercio";
-            using var cmdDelete = new NpgsqlCommand(queryDeleteLocales, connection, transaction);
-            cmdDelete.Parameters.AddWithValue("@IdComercio", ComercioSeleccionado.IdComercio);
-            await cmdDelete.ExecuteNonQueryAsync();
+            // 2. Eliminar locales que ya no están
+            var codigosActuales = LocalesComercio.Select(l => l.CodigoLocal).ToList();
+            var queryEliminar = @"DELETE FROM locales 
+                                  WHERE id_comercio = @IdComercio 
+                                  AND codigo_local NOT IN (SELECT unnest(@Codigos))";
             
-            // 3. Insertar locales actualizados
+            using (var cmdEliminar = new NpgsqlCommand(queryEliminar, connection, transaction))
+            {
+                cmdEliminar.Parameters.AddWithValue("@IdComercio", ComercioSeleccionado.IdComercio);
+                cmdEliminar.Parameters.AddWithValue("@Codigos", codigosActuales.ToArray());
+                await cmdEliminar.ExecuteNonQueryAsync();
+            }
+            
+            // 3. Actualizar/Insertar locales
             foreach (var local in LocalesComercio)
             {
-                var queryLocal = @"
+                var queryUpsert = @"
                     INSERT INTO locales (
                         id_comercio, codigo_local, nombre_local, direccion, local_numero,
-                        escalera, piso, telefono, email, numero_usuarios_max,
-                        observaciones, activo, modulo_divisas, modulo_pack_alimentos,
-                        modulo_billetes_avion, modulo_pack_viajes
+                        escalera, piso, telefono, email, numero_usuarios_max, observaciones,
+                        activo, modulo_divisas, modulo_pack_alimentos, 
+                        modulo_billetes_avion, modulo_pack_viajes,
+                        pais, codigo_postal, tipo_via, comision_divisas
                     )
                     VALUES (
                         @IdComercio, @CodigoLocal, @NombreLocal, @Direccion, @LocalNumero,
-                        @Escalera, @Piso, @Telefono, @Email, @NumeroUsuariosMax,
-                        @Observaciones, @Activo, @ModuloDivisas, @ModuloPackAlimentos,
-                        @ModuloBilletesAvion, @ModuloPackViajes
-                    )";
+                        @Escalera, @Piso, @Telefono, @Email, @NumeroUsuariosMax, @Observaciones,
+                        @Activo, @ModuloDivisas, @ModuloPackAlimentos,
+                        @ModuloBilletesAvion, @ModuloPackViajes,
+                        @Pais, @CodigoPostal, @TipoVia, @ComisionDivisas
+                    )
+                    ON CONFLICT (codigo_local) 
+                    DO UPDATE SET
+                        nombre_local = EXCLUDED.nombre_local,
+                        direccion = EXCLUDED.direccion,
+                        local_numero = EXCLUDED.local_numero,
+                        escalera = EXCLUDED.escalera,
+                        piso = EXCLUDED.piso,
+                        telefono = EXCLUDED.telefono,
+                        email = EXCLUDED.email,
+                        numero_usuarios_max = EXCLUDED.numero_usuarios_max,
+                        observaciones = EXCLUDED.observaciones,
+                        activo = EXCLUDED.activo,
+                        modulo_divisas = EXCLUDED.modulo_divisas,
+                        modulo_pack_alimentos = EXCLUDED.modulo_pack_alimentos,
+                        modulo_billetes_avion = EXCLUDED.modulo_billetes_avion,
+                        modulo_pack_viajes = EXCLUDED.modulo_pack_viajes,
+                        pais = EXCLUDED.pais,
+                        codigo_postal = EXCLUDED.codigo_postal,
+                        tipo_via = EXCLUDED.tipo_via,
+                        comision_divisas = EXCLUDED.comision_divisas";
                 
-                using var cmdLocal = new NpgsqlCommand(queryLocal, connection, transaction);
+                using var cmdLocal = new NpgsqlCommand(queryUpsert, connection, transaction);
                 cmdLocal.Parameters.AddWithValue("@IdComercio", ComercioSeleccionado.IdComercio);
                 cmdLocal.Parameters.AddWithValue("@CodigoLocal", local.CodigoLocal);
                 cmdLocal.Parameters.AddWithValue("@NombreLocal", local.NombreLocal);
-                cmdLocal.Parameters.AddWithValue("@Direccion", local.Direccion ?? string.Empty);
+                cmdLocal.Parameters.AddWithValue("@Direccion", local.Direccion);
                 cmdLocal.Parameters.AddWithValue("@LocalNumero", local.LocalNumero ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@Escalera", 
                     string.IsNullOrWhiteSpace(local.Escalera) ? DBNull.Value : local.Escalera);
@@ -618,41 +640,42 @@ public partial class ManageComerciosViewModel : ObservableObject
                 cmdLocal.Parameters.AddWithValue("@ModuloPackAlimentos", local.ModuloPackAlimentos);
                 cmdLocal.Parameters.AddWithValue("@ModuloBilletesAvion", local.ModuloBilletesAvion);
                 cmdLocal.Parameters.AddWithValue("@ModuloPackViajes", local.ModuloPackViajes);
+                cmdLocal.Parameters.AddWithValue("@Pais", local.Pais ?? string.Empty);
+                cmdLocal.Parameters.AddWithValue("@CodigoPostal", local.CodigoPostal ?? string.Empty);
+                cmdLocal.Parameters.AddWithValue("@TipoVia", local.TipoVia ?? string.Empty);
+                cmdLocal.Parameters.AddWithValue("@ComisionDivisas", local.ComisionDivisas);
                 
                 await cmdLocal.ExecuteNonQueryAsync();
             }
             
             await transaction.CommitAsync();
+            
+            // 4. Subir nuevos archivos
+            if (ArchivosParaSubir.Any())
+            {
+                foreach (var rutaArchivo in ArchivosParaSubir)
+                {
+                    try
+                    {
+                        await _archivoService.SubirArchivo(ComercioSeleccionado.IdComercio, rutaArchivo, null, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error subiendo archivo {rutaArchivo}: {ex.Message}");
+                    }
+                }
+            }
         }
         catch
         {
             await transaction.RollbackAsync();
             throw;
         }
-        
-        // 4. AHORA SÍ, SUBIR ARCHIVOS FUERA DE LA TRANSACCIÓN
-        if (ArchivosParaSubir.Any())
-        {
-            foreach (var rutaArchivo in ArchivosParaSubir)
-            {
-                try
-                {
-                    await _archivoService.SubirArchivo(ComercioSeleccionado.IdComercio, rutaArchivo, null, null);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error subiendo archivo {rutaArchivo}: {ex.Message}");
-                    // Continuar con los demás archivos aunque uno falle
-                }
-            }
-        }
     }
 
     [RelayCommand]
     private async Task EliminarComercio(ComercioModel comercio)
     {
-        // TODO: Implementar confirmación con modal
-        
         Cargando = true;
 
         try
@@ -660,19 +683,17 @@ public partial class ManageComerciosViewModel : ObservableObject
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            // Eliminar archivos primero
             await _archivoService.EliminarArchivosDeComercio(comercio.IdComercio);
 
-            // Eliminar comercio (CASCADE eliminará locales y relaciones)
-            var query = "DELETE FROM comercios WHERE id_comercio = @Id";
+            var query = "DELETE FROM comercios WHERE id_comercio = @IdComercio";
             using var cmd = new NpgsqlCommand(query, connection);
-            cmd.Parameters.AddWithValue("@Id", comercio.IdComercio);
+            cmd.Parameters.AddWithValue("@IdComercio", comercio.IdComercio);
+            
             await cmd.ExecuteNonQueryAsync();
 
-            // Recargar datos
             await CargarDatosDesdeBaseDatos();
 
-            MensajeExito = "✓ Comercio eliminado correctamente";
+            MensajeExito = $"✓ Comercio {comercio.NombreComercio} eliminado correctamente";
             MostrarMensajeExito = true;
             await Task.Delay(3000);
             MostrarMensajeExito = false;
@@ -681,7 +702,7 @@ public partial class ManageComerciosViewModel : ObservableObject
         {
             MensajeExito = $"❌ Error al eliminar: {ex.Message}";
             MostrarMensajeExito = true;
-            await Task.Delay(5000);
+            await Task.Delay(3000);
             MostrarMensajeExito = false;
         }
         finally
@@ -697,26 +718,22 @@ public partial class ManageComerciosViewModel : ObservableObject
         {
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
-            
+
             var nuevoEstado = !comercio.Activo;
-            var query = @"UPDATE comercios 
-                         SET activo = @Activo, fecha_ultima_modificacion = @Fecha
-                         WHERE id_comercio = @Id";
+            var query = "UPDATE comercios SET activo = @Activo WHERE id_comercio = @IdComercio";
             
             using var cmd = new NpgsqlCommand(query, connection);
             cmd.Parameters.AddWithValue("@Activo", nuevoEstado);
-            cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
-            cmd.Parameters.AddWithValue("@Id", comercio.IdComercio);
+            cmd.Parameters.AddWithValue("@IdComercio", comercio.IdComercio);
             
             await cmd.ExecuteNonQueryAsync();
-            
-            // Actualizar en la lista
+
             comercio.Activo = nuevoEstado;
-            
+
             OnPropertyChanged(nameof(ComerciosActivos));
             OnPropertyChanged(nameof(ComerciosInactivos));
-            
-            MensajeExito = $"✓ Estado actualizado: {(nuevoEstado ? "Activo" : "Inactivo")}";
+
+            MensajeExito = $"✓ Comercio {comercio.NombreComercio} marcado como {(nuevoEstado ? "Activo" : "Inactivo")}";
             MostrarMensajeExito = true;
             await Task.Delay(2000);
             MostrarMensajeExito = false;
@@ -731,7 +748,7 @@ public partial class ManageComerciosViewModel : ObservableObject
     }
 
     // ============================================
-    // COMANDOS - FILTROS
+    // COMANDOS - FILTROS (MEJORADOS)
     // ============================================
 
     [RelayCommand]
@@ -739,28 +756,32 @@ public partial class ManageComerciosViewModel : ObservableObject
     {
         var filtrados = Comercios.AsEnumerable();
         
-        // Filtro por búsqueda
+        // Filtro por búsqueda (incluye código de local)
         if (!string.IsNullOrWhiteSpace(FiltroBusqueda))
         {
             filtrados = filtrados.Where(c => 
                 c.NombreComercio.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase) ||
-                c.NombreSrl.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase) ||
                 c.Locales.Any(l => l.NombreLocal.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase) ||
                                    l.CodigoLocal.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase))
             );
         }
         
-        // Filtro por país
-        if (!string.IsNullOrEmpty(FiltroPais) && FiltroPais != "Todos")
+        // NUEVO: Filtro por módulo
+        if (!string.IsNullOrEmpty(FiltroModulo) && FiltroModulo != "Todos")
         {
-            filtrados = filtrados.Where(c => c.Pais == FiltroPais);
+            filtrados = filtrados.Where(c => c.Locales.Any(l => 
+                (FiltroModulo == "Compra divisa" && l.ModuloDivisas) ||
+                (FiltroModulo == "Packs de alimentos" && l.ModuloPackAlimentos) ||
+                (FiltroModulo == "Billetes de avión" && l.ModuloBilletesAvion) ||
+                (FiltroModulo == "Packs de viajes" && l.ModuloPackViajes)
+            ));
         }
         
-        // Filtro por estado
+        // Filtro por estado (busca si ALGÚN local está en ese estado)
         if (!string.IsNullOrEmpty(FiltroEstado) && FiltroEstado != "Todos")
         {
             var activo = FiltroEstado == "Activo";
-            filtrados = filtrados.Where(c => c.Activo == activo);
+            filtrados = filtrados.Where(c => c.Locales.Any(l => l.Activo == activo));
         }
         
         ComerciosFiltrados.Clear();
@@ -770,21 +791,39 @@ public partial class ManageComerciosViewModel : ObservableObject
         }
     }
 
+    // NUEVO: Comando Limpiar Filtros
+    [RelayCommand]
+    private void LimpiarFiltros()
+    {
+        FiltroBusqueda = string.Empty;
+        FiltroModulo = "Todos";
+        FiltroEstado = "Todos";
+        
+        ComerciosFiltrados.Clear();
+        foreach (var comercio in Comercios.OrderBy(c => c.NombreComercio))
+        {
+            ComerciosFiltrados.Add(comercio);
+        }
+    }
+
     // ============================================
-    // COMANDOS - LOCALES
+    // COMANDOS - LOCALES (MEJORADOS)
     // ============================================
 
     [RelayCommand]
-    private void AgregarLocal()
+    private async Task AgregarLocal()
     {
         var nuevoLocal = new LocalFormModel
         {
-            CodigoLocal = GenerarCodigoLocal(),
+            CodigoLocal = await GenerarCodigoLocal(),
             NombreLocal = $"Local {LocalesComercio.Count + 1}",
             Direccion = string.Empty,
             LocalNumero = string.Empty,
             NumeroUsuariosMax = 10,
             Activo = true,
+            Pais = string.Empty,
+            CodigoPostal = string.Empty,
+            TipoVia = string.Empty,
             ModuloDivisas = false,
             ModuloPackAlimentos = false,
             ModuloBilletesAvion = false,
@@ -794,23 +833,31 @@ public partial class ManageComerciosViewModel : ObservableObject
         LocalesComercio.Add(nuevoLocal);
     }
 
+    // NUEVO: Comando QuitarLocal
     [RelayCommand]
-    private void EliminarLocal(LocalFormModel local)
+    private void QuitarLocal(LocalFormModel local)
     {
         if (local == null) return;
         LocalesComercio.Remove(local);
     }
 
+    // NUEVO: Comando CambiarEstadoLocal
+    [RelayCommand]
+    private void CambiarEstadoLocal(LocalFormModel local)
+    {
+        if (local == null) return;
+        local.Activo = !local.Activo;
+    }
+
     // ============================================
-    // COMANDOS - ARCHIVOS
+    // COMANDOS - ARCHIVOS (MEJORADOS)
     // ============================================
 
     [RelayCommand]
-    private async Task SubirArchivo()
+    private async Task SeleccionarArchivos()
     {
         try
         {
-            // Obtener la ventana principal
             var topLevel = Avalonia.Application.Current?.ApplicationLifetime is 
                 Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
                 ? desktop.MainWindow
@@ -822,25 +869,31 @@ public partial class ManageComerciosViewModel : ObservableObject
             
             var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Seleccionar archivos",
+                Title = "Seleccionar archivos del comercio",
                 AllowMultiple = true,
                 FileTypeFilter = new[]
                 {
-                    new FilePickerFileType("Todos los archivos") { Patterns = new[] { "*.*" } },
-                    new FilePickerFileType("Documentos") { Patterns = new[] { "*.pdf", "*.doc", "*.docx", "*.txt" } },
-                    new FilePickerFileType("Imágenes") { Patterns = new[] { "*.jpg", "*.jpeg", "*.png", "*.gif" } }
+                    new FilePickerFileType("Documentos") 
+                    { 
+                        Patterns = new[] { "*.pdf", "*.doc", "*.docx", "*.txt" } 
+                    },
+                    new FilePickerFileType("Imágenes") 
+                    { 
+                        Patterns = new[] { "*.jpg", "*.jpeg", "*.png", "*.gif" } 
+                    },
+                    new FilePickerFileType("Todos") 
+                    { 
+                        Patterns = new[] { "*" } 
+                    }
                 }
             });
 
-            if (files != null && files.Count > 0)
+            foreach (var file in files)
             {
-                foreach (var file in files)
+                var fileName = Path.GetFileName(file.Path.LocalPath);
+                if (!ArchivosParaSubir.Contains(fileName))
                 {
-                    var rutaArchivo = file.Path.LocalPath;
-                    if (!ArchivosParaSubir.Contains(rutaArchivo))
-                    {
-                        ArchivosParaSubir.Add(rutaArchivo);
-                    }
+                    ArchivosParaSubir.Add(fileName);
                 }
             }
         }
@@ -854,20 +907,16 @@ public partial class ManageComerciosViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void EliminarArchivoSubido(string rutaArchivo)
+    private void QuitarArchivo(string archivo)
     {
-        if (string.IsNullOrEmpty(rutaArchivo)) return;
-        ArchivosParaSubir.Remove(rutaArchivo);
+        ArchivosParaSubir.Remove(archivo);
     }
 
     [RelayCommand]
     private async Task DescargarArchivo(ArchivoComercioModel archivo)
     {
-        if (archivo == null || ComercioSeleccionado == null) return;
-        
         try
         {
-            // Obtener la ventana principal
             var topLevel = Avalonia.Application.Current?.ApplicationLifetime is 
                 Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop
                 ? desktop.MainWindow
@@ -877,25 +926,18 @@ public partial class ManageComerciosViewModel : ObservableObject
 
             var storage = topLevel.StorageProvider;
             
-            // Abrir diálogo para guardar archivo
             var file = await storage.SaveFilePickerAsync(new FilePickerSaveOptions
             {
                 Title = "Guardar archivo",
                 SuggestedFileName = archivo.NombreArchivo,
-                DefaultExtension = Path.GetExtension(archivo.NombreArchivo),
-                FileTypeChoices = new[]
-                {
-                    new FilePickerFileType("Todos los archivos") { Patterns = new[] { "*.*" } }
-                }
+                FileTypeChoices = new[] { new FilePickerFileType("Todos") { Patterns = new[] { "*" } } }
             });
 
             if (file != null)
             {
                 var rutaDestino = file.Path.LocalPath;
-                
-                // Descargar el archivo
                 await _archivoService.DescargarArchivo(
-                    ComercioSeleccionado.IdComercio, 
+                    ComercioSeleccionado!.IdComercio, 
                     archivo.IdArchivo,
                     rutaDestino
                 );
@@ -914,6 +956,144 @@ public partial class ManageComerciosViewModel : ObservableObject
             MostrarMensajeExito = false;
         }
     }
+
+    // ============================================
+    // SISTEMA DE CÓDIGOS DE LOCAL (NUEVO)
+    // ============================================
+
+    private async Task InicializarTablaCorrelativos()
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(ConnectionString);
+            await connection.OpenAsync();
+
+            var queryCrearTabla = @"
+                CREATE TABLE IF NOT EXISTS correlativo_locales (
+                    id SERIAL PRIMARY KEY,
+                    ultimo_correlativo INTEGER NOT NULL DEFAULT 0,
+                    fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )";
+            
+            using (var cmd = new NpgsqlCommand(queryCrearTabla, connection))
+            {
+                await cmd.ExecuteNonQueryAsync();
+            }
+
+            var queryVerificar = "SELECT COUNT(*) FROM correlativo_locales";
+            using (var cmd = new NpgsqlCommand(queryVerificar, connection))
+            {
+                var count = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+                if (count == 0)
+                {
+                    var queryInsertar = "INSERT INTO correlativo_locales (ultimo_correlativo) VALUES (0)";
+                    using var cmdInsertar = new NpgsqlCommand(queryInsertar, connection);
+                    await cmdInsertar.ExecuteNonQueryAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error inicializando tabla correlativos: {ex.Message}");
+        }
+    }
+
+    private async Task<string> GenerarCodigoLocal()
+    {
+        if (string.IsNullOrEmpty(FormNombreComercio))
+        {
+            return "TEMP0001";
+        }
+
+        using var connection = new NpgsqlConnection(ConnectionString);
+        await connection.OpenAsync();
+
+        using var transaction = await connection.BeginTransactionAsync();
+        
+        try
+        {
+            // 1. Obtener y actualizar correlativo
+            var query = @"UPDATE correlativo_locales 
+                         SET ultimo_correlativo = ultimo_correlativo + 1,
+                             fecha_actualizacion = CURRENT_TIMESTAMP
+                         RETURNING ultimo_correlativo";
+            
+            int nuevoCorrelativo;
+            using (var cmd = new NpgsqlCommand(query, connection, transaction))
+            {
+                nuevoCorrelativo = Convert.ToInt32(await cmd.ExecuteScalarAsync());
+            }
+
+            // 2. Generar prefijo de 4 letras únicas
+            var prefijo = await GenerarPrefijoUnico(connection, transaction, FormNombreComercio);
+
+            // 3. Formar código: LETRAS + NUMERO con padding de 4 dígitos
+            var codigo = $"{prefijo}{nuevoCorrelativo:D4}";
+
+            await transaction.CommitAsync();
+            
+            return codigo;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    private async Task<string> GenerarPrefijoUnico(NpgsqlConnection connection, NpgsqlTransaction transaction, string nombreComercio)
+    {
+        // Limpiar nombre (solo letras)
+        var letrasDisponibles = new string(nombreComercio
+            .Where(char.IsLetter)
+            .ToArray())
+            .ToUpper();
+
+        if (letrasDisponibles.Length < 4)
+        {
+            letrasDisponibles = letrasDisponibles.PadRight(4, 'X');
+        }
+
+        // Intentar generar prefijo único
+        var random = new Random();
+        string prefijo;
+        int intentos = 0;
+        const int maxIntentos = 100;
+
+        do
+        {
+            // Tomar 4 letras aleatorias del nombre
+            var indices = Enumerable.Range(0, letrasDisponibles.Length)
+                .OrderBy(x => random.Next())
+                .Take(4)
+                .ToList();
+
+            prefijo = new string(indices.Select(i => letrasDisponibles[i]).ToArray());
+
+            // Verificar si ya existe
+            var queryVerificar = @"SELECT COUNT(*) FROM locales WHERE codigo_local LIKE @Prefijo || '%'";
+            using var cmd = new NpgsqlCommand(queryVerificar, connection, transaction);
+            cmd.Parameters.AddWithValue("@Prefijo", prefijo);
+            
+            var existe = Convert.ToInt32(await cmd.ExecuteScalarAsync()) > 0;
+            
+            if (!existe)
+                break;
+
+            intentos++;
+            
+        } while (intentos < maxIntentos);
+
+        if (intentos >= maxIntentos)
+        {
+            // Fallback: usar hash del nombre
+            var hash = Math.Abs(nombreComercio.GetHashCode());
+            prefijo = $"C{hash % 1000:D3}";
+        }
+
+        return prefijo;
+    }
+
     // ============================================
     // MÉTODOS AUXILIARES - FORMULARIO
     // ============================================
@@ -970,79 +1150,37 @@ public partial class ManageComerciosViewModel : ObservableObject
             });
         }
         
-        // Limpiar archivos para subir (los existentes se cargan en VerDetalles)
         ArchivosParaSubir.Clear();
-    }
-
-    private string GenerarCodigoLocal()
-    {
-        // Extraer 3 letras del nombre del comercio
-        var letras = string.IsNullOrEmpty(FormNombreComercio) 
-            ? "LOC"
-            : new string(FormNombreComercio
-                .Where(char.IsLetter)
-                .Take(3)
-                .ToArray())
-                .ToUpper()
-                .PadRight(3, 'X');
-        
-        // Generar 4 dígitos aleatorios únicos
-        var random = new Random();
-        string digitos;
-        int intentos = 0;
-        const int maxIntentos = 100;
-        
-        do
-        {
-            digitos = random.Next(1000, 9999).ToString();
-            intentos++;
-            
-            if (intentos >= maxIntentos)
-            {
-                // Si después de 100 intentos no encontramos un código único,
-                // usamos un timestamp
-                digitos = DateTime.Now.ToString("HHmmss").Substring(2);
-                break;
-            }
-        } 
-        while (Comercios.Any(c => c.Locales.Any(l => l.CodigoLocal.EndsWith(digitos))));
-        
-        return $"{letras}{digitos}";
     }
 
     private bool ValidarFormulario(out string mensajeError)
     {
         mensajeError = string.Empty;
         
-        // Validar nombre comercial
         if (string.IsNullOrWhiteSpace(FormNombreComercio))
         {
-            mensajeError = "El nombre del comercio es obligatorio";
+            mensajeError = "El nombre del comercio es requerido";
             return false;
         }
         
-        // Validar email
         if (string.IsNullOrWhiteSpace(FormMailContacto))
         {
-            mensajeError = "El email de contacto es obligatorio";
+            mensajeError = "El email de contacto es requerido";
             return false;
         }
         
-        // Validar formato de email
-        if (!FormMailContacto.Contains("@") || !FormMailContacto.Contains("."))
+        if (!FormMailContacto.Contains("@"))
         {
             mensajeError = "El formato del email no es válido";
             return false;
         }
         
-        // Validar que tenga al menos un local
         if (!LocalesComercio.Any())
         {
             mensajeError = "Debe agregar al menos un local";
             return false;
         }
         
-        // Validar locales
         foreach (var local in LocalesComercio)
         {
             if (string.IsNullOrWhiteSpace(local.NombreLocal))
@@ -1088,29 +1226,10 @@ public partial class ManageComerciosViewModel : ObservableObject
     // MÉTODOS AUXILIARES - FILTROS
     // ============================================
 
-    private void CargarPaisesDisponibles()
-    {
-        PaisesDisponibles.Clear();
-        PaisesDisponibles.Add("Todos");
-        
-        var paises = Comercios.Select(c => c.Pais).Distinct().OrderBy(p => p);
-        foreach (var pais in paises)
-        {
-            if (!string.IsNullOrEmpty(pais))
-            {
-                PaisesDisponibles.Add(pais);
-            }
-        }
-    }
-
     private async Task InicializarFiltros()
     {
-        // Esperar un momento para que termine de cargar todo
         await Task.Delay(100);
         
-        CargarPaisesDisponibles();
-        
-        // Inicializar con todos los comercios
         ComerciosFiltrados.Clear();
         foreach (var comercio in Comercios.OrderBy(c => c.NombreComercio))
         {

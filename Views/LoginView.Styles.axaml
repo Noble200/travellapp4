@@ -90,12 +90,12 @@
     <Style Selector="TextBox.inputLogin:focus /template/ Border#PART_BorderElement">
         <Setter Property="BorderBrush" Value="#ffd966"/>
         <Setter Property="BorderThickness" Value="3"/>
-        <Setter Property="BoxShadow" Value="0 0 0 3 #40ffd966"/>
+        <Setter Property="BoxShadow" Value="0 0 0 3 #66ffd966"/>
     </Style>
     
     <!-- Hover: sombra sutil -->
     <Style Selector="TextBox.inputLogin:pointerover /template/ Border#PART_BorderElement">
-        <Setter Property="BoxShadow" Value="0 2 8 0 #200b5394"/>
+        <Setter Property="BoxShadow" Value="0 2 8 0 #330b5394"/>
     </Style>
     
     <!-- Watermark (placeholder) -->

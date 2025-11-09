@@ -24,6 +24,10 @@
             <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
             <converters:NotNullToVisibilityConverter x:Key="NotNullToVisibilityConverter"/>
             <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
+            
+            <!-- NUEVOS: Converters para Gestión de Comercios -->
+            <converters:EstadoActivoColorConverter x:Key="EstadoActivoColorConverter"/>
+            <converters:EstadoTextoMayusculaConverter x:Key="EstadoTextoMayusculaConverter"/>
 
             <!-- ===================================== -->
             <!-- COLORES CORPORATIVOS ALLVA -->
