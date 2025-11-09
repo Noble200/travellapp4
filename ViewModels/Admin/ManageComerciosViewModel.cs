@@ -19,6 +19,7 @@ namespace Allva.Desktop.ViewModels.Admin;
 /// ViewModel para la gestión de comercios en el panel de administración
 /// VERSIÓN CORREGIDA CON:
 /// - "Flotante" → "Flooter" en todo el código
+/// - Gestión de archivos CORREGIDA: ahora guarda rutas completas
 /// - Botón Activar/Desactivar para LOCALES (no comercios)
 /// - Carga de usuarios por local implementada
 /// - Corrección de NullReferenceException al ver detalles
@@ -412,22 +413,29 @@ public partial class ManageComerciosViewModel : ObservableObject
         {
             Cargando = true;
             
-            // ✅ CRÍTICO: Recargar el comercio con todos sus datos actualizados
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
             
             // Recargar locales del comercio
             var localesActualizados = await CargarLocalesDelComercio(connection, comercio.IdComercio);
             
-            // Cargar usuarios para cada local
+            // Cargar usuarios para cada local Y forzar actualización de contadores
             foreach (var local in localesActualizados)
             {
-                local.Usuarios = await CargarUsuariosDelLocal(connection, local.IdLocal);
+                var usuarios = await CargarUsuariosDelLocal(connection, local.IdLocal);
+                
+                // ✅ CRÍTICO: Esto dispara OnPropertyChanged en CantidadUsuariosFijos y CantidadUsuariosFlooter
+                local.Usuarios = usuarios;
             }
             
+            // Asignar locales actualizados al comercio
             comercio.Locales = localesActualizados;
             
+            // ✅ FORZAR ACTUALIZACIÓN: Limpiar y reasignar
+            ComercioSeleccionado = null;
+            await Task.Delay(10); // Pequeña pausa para que Avalonia procese el cambio
             ComercioSeleccionado = comercio;
+            
             TituloPanelDerecho = $"Detalles: {comercio.NombreComercio}";
             MostrarFormulario = false;
             MostrarPanelDerecho = true;
@@ -605,18 +613,19 @@ public partial class ManageComerciosViewModel : ObservableObject
             
             await transaction.CommitAsync();
             
-            // 3. Subir archivos
+            // 3. Subir archivos DESPUÉS de hacer commit (usando las rutas completas)
             if (ArchivosParaSubir.Any())
             {
                 foreach (var rutaArchivo in ArchivosParaSubir)
                 {
                     try
                     {
+                        Console.WriteLine($"📤 Subiendo archivo: {rutaArchivo}");
                         await _archivoService.SubirArchivo(idComercio, rutaArchivo, null, null);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error subiendo archivo {rutaArchivo}: {ex.Message}");
+                        Console.WriteLine($"❌ Error subiendo archivo {rutaArchivo}: {ex.Message}");
                     }
                 }
             }
@@ -750,18 +759,19 @@ public partial class ManageComerciosViewModel : ObservableObject
             
             await transaction.CommitAsync();
             
-            // 4. Subir nuevos archivos
+            // 4. Subir nuevos archivos DESPUÉS de hacer commit (usando las rutas completas)
             if (ArchivosParaSubir.Any())
             {
                 foreach (var rutaArchivo in ArchivosParaSubir)
                 {
                     try
                     {
+                        Console.WriteLine($"📤 Subiendo archivo: {rutaArchivo}");
                         await _archivoService.SubirArchivo(ComercioSeleccionado.IdComercio, rutaArchivo, null, null);
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error subiendo archivo {rutaArchivo}: {ex.Message}");
+                        Console.WriteLine($"❌ Error subiendo archivo {rutaArchivo}: {ex.Message}");
                     }
                 }
             }
@@ -1058,9 +1068,12 @@ public partial class ManageComerciosViewModel : ObservableObject
     }
 
     // ============================================
-    // COMANDOS - ARCHIVOS (MEJORADOS)
+    // COMANDOS - ARCHIVOS (CORREGIDOS)
     // ============================================
 
+    /// <summary>
+    /// ✅ CORREGIDO: Ahora guarda la RUTA COMPLETA del archivo, no solo el nombre
+    /// </summary>
     [RelayCommand]
     private async Task SeleccionarArchivos()
     {
@@ -1098,11 +1111,21 @@ public partial class ManageComerciosViewModel : ObservableObject
 
             foreach (var file in files)
             {
-                var fileName = Path.GetFileName(file.Path.LocalPath);
-                if (!ArchivosParaSubir.Contains(fileName))
+                // ✅ CORREGIDO: Guardar la RUTA COMPLETA, no solo el nombre
+                var rutaCompleta = file.Path.LocalPath;
+                if (!ArchivosParaSubir.Contains(rutaCompleta))
                 {
-                    ArchivosParaSubir.Add(fileName);
+                    ArchivosParaSubir.Add(rutaCompleta);
+                    Console.WriteLine($"📎 Archivo agregado para subir: {rutaCompleta}");
                 }
+            }
+            
+            if (files.Count > 0)
+            {
+                MensajeExito = $"✓ {files.Count} archivo(s) seleccionado(s)";
+                MostrarMensajeExito = true;
+                await Task.Delay(2000);
+                MostrarMensajeExito = false;
             }
         }
         catch (Exception ex)
@@ -1445,6 +1468,8 @@ public partial class ManageComerciosViewModel : ObservableObject
     {
         try
         {
+            Console.WriteLine($"📂 Cargando archivos del comercio ID: {idComercio}");
+            
             ArchivosComercioSeleccionado.Clear();
             
             var archivos = await _archivoService.ObtenerArchivosPorComercio(idComercio);
@@ -1453,10 +1478,12 @@ public partial class ManageComerciosViewModel : ObservableObject
             {
                 ArchivosComercioSeleccionado.Add(archivo);
             }
+            
+            Console.WriteLine($"✅ Archivos cargados: {archivos.Count}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al cargar archivos: {ex.Message}");
+            Console.WriteLine($"❌ Error al cargar archivos: {ex.Message}");
         }
     }
 

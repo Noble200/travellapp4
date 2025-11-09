@@ -118,7 +118,7 @@ public class ComercioModel
 
 /// <summary>
 /// Modelo simplificado de Local para mostrar en la lista de comercios
-/// VERSIÓN CORREGIDA: Con Pais, CodigoPostal y TipoVia agregados
+/// VERSIÓN CORREGIDA: Con propiedades observables para contadores de usuarios
 /// Ahora hereda de ObservableObject para notificar cambios de propiedades
 /// </summary>
 public partial class LocalSimpleModel : ObservableObject
@@ -180,18 +180,38 @@ public partial class LocalSimpleModel : ObservableObject
     
     /// <summary>
     /// Lista de usuarios asignados a este local
+    /// ✅ CORRECCIÓN: Ahora notifica cambios en las propiedades calculadas
     /// </summary>
-    public List<UserSimpleModel> Usuarios { get; set; } = new List<UserSimpleModel>();
+    private List<UserSimpleModel> _usuarios = new List<UserSimpleModel>();
     
     /// <summary>
-    /// Cantidad de usuarios fijos en este local
+    /// ✅ SOLUCIÓN: Propiedad observable para cantidad de usuarios fijos
     /// </summary>
-    public int CantidadUsuariosFijos => Usuarios?.Count(u => !u.EsFlooter) ?? 0;
+    [ObservableProperty]
+    private int _cantidadUsuariosFijos = 0;
     
     /// <summary>
-    /// Cantidad de usuarios flooter asignados a este local
+    /// ✅ SOLUCIÓN: Propiedad observable para cantidad de usuarios flooter
     /// </summary>
-    public int CantidadUsuariosFlooter => Usuarios?.Count(u => u.EsFlooter) ?? 0;
+    [ObservableProperty]
+    private int _cantidadUsuariosFlooter = 0;
+    
+    public List<UserSimpleModel> Usuarios
+    {
+        get => _usuarios;
+        set
+        {
+            if (_usuarios != value)
+            {
+                _usuarios = value;
+                OnPropertyChanged(nameof(Usuarios));
+                
+                // ✅ CRÍTICO: Actualizar las propiedades observables
+                CantidadUsuariosFijos = _usuarios?.Count(u => !u.EsFlooter) ?? 0;
+                CantidadUsuariosFlooter = _usuarios?.Count(u => u.EsFlooter) ?? 0;
+            }
+        }
+    }
     
     // ============================================
     // PERMISOS DE MÓDULOS POR LOCAL
