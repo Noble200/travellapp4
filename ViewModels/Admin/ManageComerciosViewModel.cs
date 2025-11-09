@@ -24,6 +24,7 @@ namespace Allva.Desktop.ViewModels.Admin;
 /// - Corrección de NullReferenceException al ver detalles
 /// - Campos obligatorios: Pais, CodigoPostal, TipoVia, Direccion, LocalNumero
 /// - Eliminado ComisionDivisas de locales
+/// - Filtros mejorados: por tipo de búsqueda, país y cantidad de locales
 /// </summary>
 public partial class ManageComerciosViewModel : ObservableObject
 {
@@ -71,6 +72,9 @@ public partial class ManageComerciosViewModel : ObservableObject
     [ObservableProperty]
     private bool _esModoCreacion = false;
 
+    // Título del botón guardar que cambia según el modo
+    public string TituloBotonGuardar => EsModoCreacion ? "CREAR COMERCIO" : "GUARDAR CAMBIOS";
+
     // ============================================
     // PROPIEDADES PARA FORMULARIO
     // ============================================
@@ -117,15 +121,18 @@ public partial class ManageComerciosViewModel : ObservableObject
     private ObservableCollection<LocalFormModel> _localesComercio = new();
 
     // ============================================
-    // PROPIEDADES PARA FILTROS (MEJORADAS)
+    // PROPIEDADES PARA FILTROS (MEJORADAS Y COMPLETAS)
     // ============================================
 
     [ObservableProperty]
     private string _filtroBusqueda = string.Empty;
 
     [ObservableProperty]
-    private string _filtroEstado = "Todos";
-    
+    private string _filtroTipoBusqueda = "Todos";
+
+    [ObservableProperty]
+    private string _filtroPais = string.Empty;
+
     // Filtro por módulo
     [ObservableProperty]
     private string _filtroModulo = "Todos";
@@ -374,6 +381,7 @@ public partial class ManageComerciosViewModel : ObservableObject
     {
         LimpiarFormulario();
         EsModoCreacion = true;
+        OnPropertyChanged(nameof(TituloBotonGuardar));
         ModoEdicion = false;
         TituloFormulario = "Crear Nuevo Comercio";
         TituloPanelDerecho = "Crear Nuevo Comercio";
@@ -387,6 +395,7 @@ public partial class ManageComerciosViewModel : ObservableObject
         ComercioSeleccionado = comercio;
         CargarDatosEnFormulario(comercio);
         EsModoCreacion = false;
+        OnPropertyChanged(nameof(TituloBotonGuardar));
         ModoEdicion = true;
         TituloFormulario = "Editar Comercio";
         TituloPanelDerecho = $"Editar: {comercio.NombreComercio}";
@@ -590,7 +599,6 @@ public partial class ManageComerciosViewModel : ObservableObject
                 cmdLocal.Parameters.AddWithValue("@Pais", local.Pais ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@CodigoPostal", local.CodigoPostal ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@TipoVia", local.TipoVia ?? string.Empty);
-                // ❌ SIN ComisionDivisas
                 
                 await cmdLocal.ExecuteNonQueryAsync();
             }
@@ -736,7 +744,6 @@ public partial class ManageComerciosViewModel : ObservableObject
                 cmdLocal.Parameters.AddWithValue("@Pais", local.Pais ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@CodigoPostal", local.CodigoPostal ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@TipoVia", local.TipoVia ?? string.Empty);
-                // ❌ SIN ComisionDivisas
                 
                 await cmdLocal.ExecuteNonQueryAsync();
             }
@@ -899,7 +906,7 @@ public partial class ManageComerciosViewModel : ObservableObject
     }
 
     // ============================================
-    // COMANDOS - FILTROS (MEJORADOS)
+    // COMANDOS - FILTROS (LÓGICA MEJORADA Y COMPLETA)
     // ============================================
 
     [RelayCommand]
@@ -907,17 +914,82 @@ public partial class ManageComerciosViewModel : ObservableObject
     {
         var filtrados = Comercios.AsEnumerable();
         
-        // Filtro por búsqueda (incluye código de local)
+        // ===== FILTRO POR BÚSQUEDA GENERAL =====
         if (!string.IsNullOrWhiteSpace(FiltroBusqueda))
         {
-            filtrados = filtrados.Where(c => 
-                c.NombreComercio.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase) ||
-                c.Locales.Any(l => l.NombreLocal.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase) ||
-                                   l.CodigoLocal.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase))
+            var busqueda = FiltroBusqueda.Trim();
+            
+            // Filtro según el tipo de búsqueda seleccionado
+            switch (FiltroTipoBusqueda)
+            {
+                case "Por Comercio":
+                    // Buscar solo en datos del comercio
+                    filtrados = filtrados.Where(c =>
+                        c.NombreComercio.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                        c.MailContacto.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                        c.NumeroContacto.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                        c.DireccionCentral.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                    );
+                    break;
+                    
+                case "Por Local":
+                    // Buscar solo en datos de locales
+                    filtrados = filtrados.Where(c =>
+                        c.Locales.Any(l =>
+                            (l.NombreLocal?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.Direccion?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.Email?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.Telefono?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.CodigoPostal?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.TipoVia?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false)
+                        )
+                    );
+                    break;
+                    
+                case "Por Código":
+                    // Buscar solo por código de local
+                    filtrados = filtrados.Where(c =>
+                        c.Locales.Any(l =>
+                            l.CodigoLocal.Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                        )
+                    );
+                    break;
+                    
+                default: // "Todos"
+                    // Búsqueda completa en todos los campos
+                    filtrados = filtrados.Where(c =>
+                        // Datos del comercio
+                        c.NombreComercio.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                        c.MailContacto.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                        (c.NumeroContacto?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (c.DireccionCentral?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        c.Pais.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                        // Datos de locales
+                        c.Locales.Any(l =>
+                            l.CodigoLocal.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                            (l.NombreLocal?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.Direccion?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.Email?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.Telefono?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.CodigoPostal?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.TipoVia?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                            (l.Pais?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false)
+                        )
+                    );
+                    break;
+            }
+        }
+        
+        // ===== FILTRO POR PAÍS (BÚSQUEDA DE TEXTO) =====
+        if (!string.IsNullOrWhiteSpace(FiltroPais))
+        {
+            filtrados = filtrados.Where(c =>
+                c.Pais.Contains(FiltroPais, StringComparison.OrdinalIgnoreCase) ||
+                c.Locales.Any(l => l.Pais.Contains(FiltroPais, StringComparison.OrdinalIgnoreCase))
             );
         }
         
-        // Filtro por módulo
+        // ===== FILTRO POR MÓDULO =====
         if (!string.IsNullOrEmpty(FiltroModulo) && FiltroModulo != "Todos")
         {
             filtrados = filtrados.Where(c => c.Locales.Any(l => 
@@ -928,13 +1000,7 @@ public partial class ManageComerciosViewModel : ObservableObject
             ));
         }
         
-        // Filtro por estado (busca si ALGÚN local está en ese estado)
-        if (!string.IsNullOrEmpty(FiltroEstado) && FiltroEstado != "Todos")
-        {
-            var activo = FiltroEstado == "Activo";
-            filtrados = filtrados.Where(c => c.Locales.Any(l => l.Activo == activo));
-        }
-        
+        // ===== APLICAR RESULTADOS =====
         ComerciosFiltrados.Clear();
         foreach (var comercio in filtrados.OrderBy(c => c.NombreComercio))
         {
@@ -946,8 +1012,9 @@ public partial class ManageComerciosViewModel : ObservableObject
     private void LimpiarFiltros()
     {
         FiltroBusqueda = string.Empty;
+        FiltroTipoBusqueda = "Todos";
         FiltroModulo = "Todos";
-        FiltroEstado = "Todos";
+        FiltroPais = string.Empty;
         
         ComerciosFiltrados.Clear();
         foreach (var comercio in Comercios.OrderBy(c => c.NombreComercio))
@@ -1294,7 +1361,6 @@ public partial class ManageComerciosViewModel : ObservableObject
                 ModuloBilletesAvion = local.ModuloBilletesAvion,
                 ModuloPackViajes = local.ModuloPackViajes,
                 NumeroUsuariosMax = 10
-                // ❌ SIN ComisionDivisas
             });
         }
         
