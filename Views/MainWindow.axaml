@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:Allva.Desktop.Views"
+        x:Class="Allva.Desktop.Views.MainWindow"
+        Title="Allva System - Panel de Testeo Visual"
+        Width="1400" Height="900"
+        WindowStartupLocation="CenterScreen">
+    
+    <views:TestPanelView/>
+    
+</Window>

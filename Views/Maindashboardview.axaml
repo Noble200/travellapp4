@@ -1,0 +1,187 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Allva.Desktop.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
+             x:Class="Allva.Desktop.Views.MainDashboardView"
+             x:DataType="vm:MainDashboardViewModel">
+
+    <Grid Background="#F5F5F5">
+        <Grid.ColumnDefinitions>
+            <!-- Menú lateral -->
+            <ColumnDefinition Width="280"/>
+            <!-- Contenido principal -->
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- ========== MENÚ LATERAL IZQUIERDO ========== -->
+        <Border Grid.Column="0" Background="#003566" BoxShadow="2 0 10 0 #30000000">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/> <!-- Logo -->
+                    <RowDefinition Height="*"/>    <!-- Menú -->
+                    <RowDefinition Height="Auto"/> <!-- Info usuario -->
+                </Grid.RowDefinitions>
+
+                <!-- ========== LOGO Y TÍTULO ========== -->
+                <Border Grid.Row="0" Background="#FFC600" Padding="20,25">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="Allva" 
+                                   FontSize="32" 
+                                   FontWeight="Bold" 
+                                   Foreground="#003566"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Sistema de Gestión" 
+                                   FontSize="11" 
+                                   Foreground="#003566"
+                                   HorizontalAlignment="Center"
+                                   Opacity="0.8"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- ========== MENÚ DE NAVEGACIÓN ========== -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="5" Margin="0,20,0,0">
+                        
+                        <!-- Dashboard / Últimas Noticias -->
+                        <Button Name="BtnDashboard"
+                                Background="#FFC600"
+                                Click="NavigateToDashboard"
+                                Padding="20,15"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                BorderThickness="0"
+                                CornerRadius="0">
+                            <StackPanel Orientation="Horizontal" Spacing="15">
+                                <TextBlock Text="📰" FontSize="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Últimas Noticias" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold"
+                                           Foreground="White"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Divisor -->
+                        <Border Height="1" Background="#FFFFFF20" Margin="20,10"/>
+
+                        <!-- Compra de Divisas -->
+                        <Button Name="BtnDivisas"
+                                Background="Transparent"
+                                Click="NavigateToDivisas"
+                                Padding="20,15"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                BorderThickness="0"
+                                CornerRadius="0">
+                            <StackPanel Orientation="Horizontal" Spacing="15">
+                                <TextBlock Text="💱" FontSize="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Compra de Divisas" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold"
+                                           Foreground="White"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Pack de Alimentos -->
+                        <Button Name="BtnAlimentos"
+                                Background="Transparent"
+                                Click="NavigateToAlimentos"
+                                Padding="20,15"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                BorderThickness="0"
+                                CornerRadius="0">
+                            <StackPanel Orientation="Horizontal" Spacing="15">
+                                <TextBlock Text="🍱" FontSize="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Pack de Alimentos" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold"
+                                           Foreground="White"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Billetes de Avión -->
+                        <Button Name="BtnBilletes"
+                                Background="Transparent"
+                                Click="NavigateToBilletes"
+                                Padding="20,15"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                BorderThickness="0"
+                                CornerRadius="0">
+                            <StackPanel Orientation="Horizontal" Spacing="15">
+                                <TextBlock Text="✈️" FontSize="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Billetes de Avión" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold"
+                                           Foreground="White"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- Packs de Viajes -->
+                        <Button Name="BtnViajes"
+                                Background="Transparent"
+                                Click="NavigateToViajes"
+                                Padding="20,15"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Left"
+                                BorderThickness="0"
+                                CornerRadius="0">
+                            <StackPanel Orientation="Horizontal" Spacing="15">
+                                <TextBlock Text="🌍" FontSize="24" VerticalAlignment="Center"/>
+                                <TextBlock Text="Packs de Viajes" 
+                                           FontSize="15" 
+                                           FontWeight="SemiBold"
+                                           Foreground="White"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- ========== INFO USUARIO Y CERRAR SESIÓN ========== -->
+                <Border Grid.Row="2" Background="#00000020" Padding="20,15">
+                    <StackPanel Spacing="15">
+                        <!-- Info del usuario -->
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="👤 Usuario:" 
+                                       FontSize="11" 
+                                       Foreground="#FFFFFF80"/>
+                            <TextBlock Text="{Binding UserName}" 
+                                       FontSize="13" 
+                                       FontWeight="SemiBold"
+                                       Foreground="White"/>
+                            <TextBlock Text="{Binding LocalCode}" 
+                                       FontSize="11" 
+                                       Foreground="#FFFFFF60"/>
+                        </StackPanel>
+
+                        <!-- Botón Cerrar Sesión -->
+                        <Button Content="Cerrar Sesión"
+                                Click="CerrarSesion"
+                                Background="#FFC600"
+                                Foreground="#003566"
+                                FontWeight="Bold"
+                                FontSize="13"
+                                Padding="0,10"
+                                HorizontalAlignment="Stretch"
+                                CornerRadius="5"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ========== CONTENIDO PRINCIPAL (MÓDULOS) ========== -->
+        <ContentControl Grid.Column="1" 
+                        Content="{Binding CurrentView}"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"/>
+
+    </Grid>
+</UserControl>

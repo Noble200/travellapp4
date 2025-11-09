@@ -1,0 +1,254 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
+             x:Class="Allva.Desktop.Views.TestPanelView">
+
+    <!-- Importar estilos externos -->
+    <UserControl.Styles>
+        <StyleInclude Source="TestPanelView.Styles.axaml"/>
+    </UserControl.Styles>
+
+    <!-- ============================================ -->
+    <!-- CONTENIDO DEL PANEL -->
+    <!-- ============================================ -->
+    
+    <Grid Background="#ffd966">
+        <ScrollViewer>
+            <StackPanel Margin="30">
+
+                <!-- ────────────────────────────────────── -->
+                <!-- ENCABEZADO CON LOGO E ICONOS -->
+                <!-- ────────────────────────────────────── -->
+                <Border Classes="panelContenido" Margin="0,0,0,20">
+                    <Grid ColumnDefinitions="Auto,*,Auto">
+                        <!-- Logo -->
+                        <Border Grid.Column="0" Classes="logoContainer">
+                            <Image Source="/Assets/logo-allva.png" 
+                                   Height="40"
+                                   Stretch="Uniform"/>
+                        </Border>
+
+                        <!-- Iconos derecha -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <Border Classes="iconoCircular" Margin="0,0,15,0">
+                                <TextBlock Text="🔔" 
+                                          FontSize="24"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <Border Classes="iconoCircular" Margin="0,0,15,0">
+                                <TextBlock Text="👤" 
+                                          FontSize="24"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <Border Classes="iconoCircular">
+                                <TextBlock Text="☰" 
+                                          FontSize="24"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ────────────────────────────────────── -->
+                <!-- PALETA DE COLORES CORPORATIVOS -->
+                <!-- ────────────────────────────────────── -->
+                <Border Classes="panelContenido" Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Classes="tituloSeccion"
+                                  Text="🎨 PALETA DE COLORES CORPORATIVOS" 
+                                  Margin="0,0,0,15"/>
+                        
+                        <Grid ColumnDefinitions="*,*,*,*,*">
+                            <!-- Azul Primario -->
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <Border Classes="colorPrimary" Height="80" CornerRadius="8" Margin="0,0,0,5"/>
+                                <TextBlock Classes="etiquetaColor" Text="#0b5394" Margin="0,0,0,5"/>
+                                <TextBlock Classes="nombreColor" Text="Azul Primario"/>
+                            </StackPanel>
+                            
+                            <!-- Amarillo -->
+                            <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                                <Border Classes="colorSecondary" Height="80" CornerRadius="8" Margin="0,0,0,5"/>
+                                <TextBlock Classes="etiquetaColor" Text="#ffd966" Margin="0,0,0,5"/>
+                                <TextBlock Classes="nombreColor" Text="Amarillo"/>
+                            </StackPanel>
+                            
+                            <!-- Gris Oscuro -->
+                            <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                                <Border Classes="colorGrisOscuro" Height="80" CornerRadius="8" Margin="0,0,0,5"/>
+                                <TextBlock Classes="etiquetaColor" Text="#595959" Foreground="White" Margin="0,0,0,5"/>
+                                <TextBlock Classes="nombreColor" Text="Gris Oscuro"/>
+                            </StackPanel>
+                            
+                            <!-- Gris Claro -->
+                            <StackPanel Grid.Column="3" Margin="0,0,10,0">
+                                <Border Classes="colorGrisClaro" Height="80" CornerRadius="8" Margin="0,0,0,5"/>
+                                <TextBlock Classes="etiquetaColor" Text="#f3f3f3" Margin="0,0,0,5"/>
+                                <TextBlock Classes="nombreColor" Text="Gris Claro"/>
+                            </StackPanel>
+                            
+                            <!-- Blanco -->
+                            <StackPanel Grid.Column="4">
+                                <Border Classes="colorBlanco" Height="80" CornerRadius="8" 
+                                       BorderBrush="#e0e0e0" BorderThickness="1" Margin="0,0,0,5"/>
+                                <TextBlock Classes="etiquetaColor" Text="#ffffff" Margin="0,0,0,5"/>
+                                <TextBlock Classes="nombreColor" Text="Blanco"/>
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ────────────────────────────────────── -->
+                <!-- BOTONES -->
+                <!-- ────────────────────────────────────── -->
+                <Border Classes="panelContenido" Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Classes="tituloSeccion"
+                                  Text="🔘 BOTONES" 
+                                  Margin="0,0,0,20"/>
+                        
+                        <StackPanel Orientation="Horizontal">
+                            <Button Classes="btnPrimary" Content="Botón Primario" Margin="0,0,15,0"/>
+                            <Button Classes="btnSecondary" Content="Botón Secundario" Margin="0,0,15,0"/>
+                            <Button Classes="btnPrimary" Content="Guardar cambios" Margin="0,0,15,0"/>
+                            <Button Classes="btnSecondary" Content="Cancelar"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- ────────────────────────────────────── -->
+                <!-- CAMPOS DE TEXTO -->
+                <!-- ────────────────────────────────────── -->
+                <Border Classes="panelContenido" Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Classes="tituloSeccion"
+                                  Text="📝 CAMPOS DE TEXTO" 
+                                  Margin="0,0,0,20"/>
+                        
+                        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto,*">
+                            <!-- Usuario -->
+                            <Border Grid.Row="0" Grid.Column="0" Classes="labelAmarillo" Margin="0,0,15,15">
+                                <TextBlock Classes="labelText" Text="Usuario"/>
+                            </Border>
+                            <TextBox Grid.Row="0" Grid.Column="1" 
+                                    Classes="inputField" 
+                                    Watermark="Ingresa tu usuario"
+                                    Margin="0,0,0,15"/>
+                            
+                            <!-- Contraseña -->
+                            <Border Grid.Row="1" Grid.Column="0" Classes="labelAmarillo" Margin="0,0,15,15">
+                                <TextBlock Classes="labelText" Text="Contraseña"/>
+                            </Border>
+                            <TextBox Grid.Row="1" Grid.Column="1" 
+                                    Classes="inputField" 
+                                    PasswordChar="●"
+                                    Watermark="Ingresa tu contraseña"
+                                    Margin="0,0,0,15"/>
+                            
+                            <!-- Código Oficina -->
+                            <Border Grid.Row="2" Grid.Column="0" Classes="labelAmarillo" Margin="0,0,15,0">
+                                <TextBlock Classes="labelText" Text="Código Oficina"/>
+                            </Border>
+                            <TextBox Grid.Row="2" Grid.Column="1" 
+                                    Classes="inputField" 
+                                    Watermark="CENTRAL"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- ────────────────────────────────────── -->
+                <!-- TARJETAS DE PRODUCTOS -->
+                <!-- ────────────────────────────────────── -->
+                <Border Classes="panelContenido">
+                    <StackPanel>
+                        <TextBlock Classes="tituloSeccion"
+                                  Text="🎁 TARJETAS DE PRODUCTOS" 
+                                  Margin="0,0,0,20"/>
+                        
+                        <Grid ColumnDefinitions="*,*,*,*">
+                            <!-- Pack limpieza -->
+                            <Border Grid.Column="0" Classes="tarjetaProducto" Margin="0,0,15,0">
+                                <StackPanel>
+                                    <Border Classes="iconoProducto" 
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,10">
+                                        <TextBlock Text="🧼" 
+                                                  FontSize="40"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Classes="nombreProducto" 
+                                              Text="Pack limpieza" 
+                                              Margin="0,0,0,10"/>
+                                    <TextBlock Classes="precio" Text="35€"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Pack higiene -->
+                            <Border Grid.Column="1" Classes="tarjetaProducto" Margin="0,0,15,0">
+                                <StackPanel>
+                                    <Border Classes="iconoProducto" 
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,10">
+                                        <TextBlock Text="🧴" 
+                                                  FontSize="40"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Classes="nombreProducto" 
+                                              Text="Pack higiene" 
+                                              Margin="0,0,0,10"/>
+                                    <TextBlock Classes="precio" Text="20€"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Pack infantil -->
+                            <Border Grid.Column="2" Classes="tarjetaProducto" Margin="0,0,15,0">
+                                <StackPanel>
+                                    <Border Classes="iconoProducto" 
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,10">
+                                        <TextBlock Text="👶" 
+                                                  FontSize="40"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Classes="nombreProducto" 
+                                              Text="Pack infantil" 
+                                              Margin="0,0,0,10"/>
+                                    <TextBlock Classes="precio" Text="28€"/>
+                                </StackPanel>
+                            </Border>
+                            
+                            <!-- Pack premium -->
+                            <Border Grid.Column="3" Classes="tarjetaProducto">
+                                <StackPanel>
+                                    <Border Classes="iconoProducto" 
+                                           HorizontalAlignment="Center"
+                                           Margin="0,0,0,10">
+                                        <TextBlock Text="⭐" 
+                                                  FontSize="40"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Classes="nombreProducto" 
+                                              Text="Pack premium" 
+                                              Margin="0,0,0,10"/>
+                                    <TextBlock Classes="precio" Text="100€"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

@@ -1,0 +1,841 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:Allva.Desktop.ViewModels.Admin"
+             xmlns:converters="using:Allva.Desktop.Converters"
+             mc:Ignorable="d" d:DesignWidth="1400" d:DesignHeight="900"
+             x:Class="Allva.Desktop.Views.Admin.ManageUsersView"
+             x:DataType="vm:ManageUsersViewModel">
+
+    <UserControl.Styles>
+        <!-- Estilo para botón primario -->
+        <Style Selector="Button.btn-primary">
+            <Setter Property="Background" Value="#003366"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.btn-primary:pointerover">
+            <Setter Property="Background" Value="#f5c94b"/>
+            <Setter Property="Foreground" Value="#003366"/>
+        </Style>
+
+        <!-- Estilo para botón secundario -->
+        <Style Selector="Button.btn-secondary">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#003366"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="BorderBrush" Value="#003366"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.btn-secondary:pointerover">
+            <Setter Property="Background" Value="#003366"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <!-- Estilo para botones de acción (Editar/Ver) -->
+        <Style Selector="Button.btn-action">
+            <Setter Property="Background" Value="#003366"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+        <Style Selector="Button.btn-action:pointerover">
+            <Setter Property="Background" Value="#f5c94b"/>
+            <Setter Property="Foreground" Value="#003366"/>
+        </Style>
+
+        <!-- Estilo para botón eliminar -->
+        <Style Selector="Button.btn-danger">
+            <Setter Property="Background" Value="#dc3545"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="Button.btn-danger:pointerover">
+            <Setter Property="Background" Value="#c82333"/>
+        </Style>
+
+        <!-- Estilo para tarjetas de usuario -->
+        <Style Selector="Border.usuario-card">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#e0e0e0"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="24"/>
+            <Setter Property="Margin" Value="0,0,0,16"/>
+            <Setter Property="BoxShadow" Value="0 2 8 0 #15000000"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.usuario-card:pointerover">
+            <Setter Property="BoxShadow" Value="0 4 16 0 #25000000"/>
+        </Style>
+
+        <!-- Estilos para TextBox y ComboBox -->
+        <Style Selector="TextBox">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#ccc"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Padding" Value="12"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#ccc"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="White"/>
+        </Style>
+        
+        <!-- Estilo para CheckBox -->
+        <Style Selector="CheckBox">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="0,8"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ============================================ -->
+        <!-- HEADER CON ESTADÍSTICAS Y BOTÓN NUEVO -->
+        <!-- ============================================ -->
+        <Border Grid.Row="0" Background="White" 
+                BorderThickness="0,0,0,1" BorderBrush="#e0e0e0"
+                Padding="32,24">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Estadísticas -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="40">
+                    <!-- Total Usuarios -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Total Usuarios" 
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#666"/>
+                        <TextBlock Text="{Binding TotalUsuarios}" 
+                                   FontSize="32" FontWeight="Bold" Foreground="#003366"/>
+                    </StackPanel>
+
+                    <!-- Usuarios Activos -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Activos" 
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#666"/>
+                        <TextBlock Text="{Binding UsuariosActivos}" 
+                                   FontSize="32" FontWeight="Bold" Foreground="#28a745"/>
+                    </StackPanel>
+
+                    <!-- Usuarios Inactivos -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Inactivos" 
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#666"/>
+                        <TextBlock Text="{Binding UsuariosInactivos}" 
+                                   FontSize="32" FontWeight="Bold" Foreground="#dc3545"/>
+                    </StackPanel>
+
+                    <!-- Usuarios Flotantes -->
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Flotantes" 
+                                   FontSize="14" FontWeight="SemiBold" Foreground="#666"/>
+                        <TextBlock Text="{Binding UsuariosFlotantes}" 
+                                   FontSize="32" FontWeight="Bold" Foreground="#f5c94b"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Botón Nuevo Usuario -->
+                <Button Grid.Column="1" 
+                        Classes="btn-primary"
+                        Command="{Binding MostrarFormularioCrearCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="+" FontSize="20" FontWeight="Bold"/>
+                        <TextBlock Text="NUEVO USUARIO" FontSize="15"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ============================================ -->
+        <!-- CONTENIDO PRINCIPAL CON FILTROS Y LISTA -->
+        <!-- ============================================ -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ============================================ -->
+            <!-- ÁREA DE FILTROS Y LISTA DE USUARIOS -->
+            <!-- ============================================ -->
+            <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="32,24" Spacing="24">
+                    
+                    <!-- ============================================ -->
+                    <!-- FILTROS DE BÚSQUEDA -->
+                    <!-- ============================================ -->
+                    <Border Background="White" CornerRadius="10" Padding="24" 
+                            BoxShadow="0 2 8 0 #10000000">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="16"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Título -->
+                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="6"
+                                       Text="Filtros de Búsqueda"
+                                       FontSize="18" FontWeight="Bold" Foreground="#003366"
+                                       Margin="0,0,0,16"/>
+
+                            <!-- Búsqueda por nombre -->
+                            <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,0">
+                                <TextBlock Text="Buscar usuario" 
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#333"
+                                           Margin="0,0,0,8"/>
+                                <TextBox Text="{Binding FiltroBusqueda}" 
+                                         Watermark="Nombre, correo o número..."
+                                         Height="44"/>
+                            </StackPanel>
+
+                            <!-- Filtro por local -->
+                            <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,12,0">
+                                <TextBlock Text="Local" 
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#333"
+                                           Margin="0,0,0,8"/>
+                                <ComboBox SelectedItem="{Binding FiltroLocal}"
+                                          ItemsSource="{Binding LocalesDisponibles}"
+                                          Height="44" HorizontalAlignment="Stretch">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontSize="14"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- Filtro por comercio -->
+                            <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,12,0">
+                                <TextBlock Text="Comercio" 
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#333"
+                                           Margin="0,0,0,8"/>
+                                <ComboBox SelectedItem="{Binding FiltroComercio}"
+                                          ItemsSource="{Binding ComerciosDisponibles}"
+                                          Height="44" HorizontalAlignment="Stretch">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" FontSize="14"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- Filtro por estado -->
+                            <StackPanel Grid.Row="2" Grid.Column="3" Margin="0,0,12,0">
+                                <TextBlock Text="Estado" 
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#333"
+                                           Margin="0,0,0,8"/>
+                                <ComboBox SelectedItem="{Binding FiltroEstado}"
+                                          Height="44" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="Todos" FontSize="14"/>
+                                    <ComboBoxItem Content="Activo" FontSize="14"/>
+                                    <ComboBoxItem Content="Inactivo" FontSize="14"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- Filtro por tipo -->
+                            <StackPanel Grid.Row="2" Grid.Column="4" Margin="0,0,12,0">
+                                <TextBlock Text="Tipo" 
+                                           FontSize="14" FontWeight="SemiBold" Foreground="#333"
+                                           Margin="0,0,0,8"/>
+                                <ComboBox SelectedItem="{Binding FiltroTipoUsuario}"
+                                          Height="44" HorizontalAlignment="Stretch">
+                                    <ComboBoxItem Content="Todos" FontSize="14"/>
+                                    <ComboBoxItem Content="Normal" FontSize="14"/>
+                                    <ComboBoxItem Content="Flotante" FontSize="14"/>
+                                </ComboBox>
+                            </StackPanel>
+
+                            <!-- Botón Aplicar Filtros -->
+                            <Button Grid.Row="2" Grid.Column="5"
+                                    Classes="btn-primary"
+                                    Command="{Binding AplicarFiltrosCommand}"
+                                    Height="44" Margin="0,24,0,0"
+                                    MinWidth="120">
+                                <TextBlock Text="APLICAR" FontSize="14"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- ============================================ -->
+                    <!-- LISTA DE USUARIOS -->
+                    <!-- ============================================ -->
+                    <ItemsControl ItemsSource="{Binding UsuariosFiltrados}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Classes="usuario-card">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="12"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="20"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Header: Nombre y Estado -->
+                                        <Grid Grid.Row="0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <StackPanel Grid.Column="0" Spacing="4">
+                                                <TextBlock Text="{Binding NombreCompleto}"
+                                                           FontSize="22" FontWeight="Bold"
+                                                           Foreground="#003366"/>
+                                                <TextBlock Text="{Binding NumeroUsuario}"
+                                                           FontSize="14" Foreground="#666"/>
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                                                <!-- Badge de tipo -->
+                                                <Border Background="#f5c94b"
+                                                        CornerRadius="12"
+                                                        Padding="12,6">
+                                                    <TextBlock Text="{Binding TipoUsuario}"
+                                                               Foreground="#003366"
+                                                               FontWeight="Bold"
+                                                               FontSize="12"/>
+                                                </Border>
+
+                                                <!-- Badge de estado -->
+                                                <Border Background="{Binding EstadoColor}"
+                                                        CornerRadius="12"
+                                                        Padding="12,6">
+                                                    <TextBlock Text="{Binding EstadoTexto}"
+                                                               Foreground="White"
+                                                               FontWeight="Bold"
+                                                               FontSize="12"/>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Información del usuario -->
+                                        <Grid Grid.Row="2">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <!-- Correo -->
+                                            <StackPanel Grid.Column="0" Spacing="6">
+                                                <TextBlock Text="Correo" FontSize="13" Foreground="#666"/>
+                                                <TextBlock Text="{Binding Correo}" FontSize="15" FontWeight="SemiBold"/>
+                                            </StackPanel>
+
+                                            <!-- Teléfono -->
+                                            <StackPanel Grid.Column="1" Spacing="6">
+                                                <TextBlock Text="Teléfono" FontSize="13" Foreground="#666"/>
+                                                <TextBlock Text="{Binding Telefono}" FontSize="15" FontWeight="SemiBold"/>
+                                            </StackPanel>
+
+                                            <!-- Local -->
+                                            <StackPanel Grid.Column="2" Spacing="6">
+                                                <TextBlock Text="Local" FontSize="13" Foreground="#666"/>
+                                                <TextBlock Text="{Binding NombreLocal}" FontSize="15" FontWeight="SemiBold"/>
+                                            </StackPanel>
+
+                                            <!-- Comercio -->
+                                            <StackPanel Grid.Column="3" Spacing="6">
+                                                <TextBlock Text="Comercio" FontSize="13" Foreground="#666"/>
+                                                <TextBlock Text="{Binding NombreComercio}" FontSize="15" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Botones de acción -->
+                                        <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="10">
+                                            <Button Classes="btn-action"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ManageUsersViewModel)DataContext).EditarUsuarioCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="Editar"/>
+                                            </Button>
+
+                                            <Button Classes="btn-action"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ManageUsersViewModel)DataContext).VerDetallesUsuarioCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="Ver Detalles"/>
+                                            </Button>
+
+                                            <Button Classes="btn-danger"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ManageUsersViewModel)DataContext).EliminarUsuarioCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="Eliminar"/>
+                                            </Button>
+
+                                            <Button Background="{Binding EstadoBotonColor}"
+                                                    Foreground="White"
+                                                    FontWeight="Bold"
+                                                    FontSize="14"
+                                                    Padding="14,8"
+                                                    BorderThickness="0"
+                                                    CornerRadius="4"
+                                                    Cursor="Hand"
+                                                    Command="{Binding $parent[ItemsControl].((vm:ManageUsersViewModel)DataContext).CambiarEstadoUsuarioCommand}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="{Binding EstadoBotonTexto}"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Mensaje cuando no hay usuarios -->
+                    <Border IsVisible="{Binding !UsuariosFiltrados.Count}"
+                            Background="#f8f9fa"
+                            CornerRadius="10"
+                            Padding="40"
+                            MinHeight="200">
+                        <StackPanel Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="No se encontraron usuarios" 
+                                       FontSize="18" FontWeight="SemiBold" Foreground="#666"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Text="Intenta ajustar los filtros de búsqueda o crea un nuevo usuario" 
+                                       FontSize="15" Foreground="#999" 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ============================================ -->
+            <!-- PANEL LATERAL DERECHO (FORMULARIO/DETALLES) -->
+            <!-- ============================================ -->
+            <Border Grid.Column="1" 
+                    IsVisible="{Binding MostrarPanelDerecho}"
+                    Background="White"
+                    BorderThickness="1,0,0,0"
+                    BorderBrush="#e0e0e0"
+                    Width="700"
+                    BoxShadow="-4 0 12 0 #10000000">
+                
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Header del panel -->
+                    <Border Grid.Row="0" Background="#003366" Padding="28,24">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0"
+                                       Text="{Binding TituloPanelDerecho}" 
+                                       FontSize="22" FontWeight="Bold" 
+                                       Foreground="White"
+                                       VerticalAlignment="Center"/>
+
+                            <Button Grid.Column="1"
+                                    Command="{Binding CerrarPanelDerechoCommand}"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Foreground="White"
+                                    FontSize="28"
+                                    Padding="12,4"
+                                    Cursor="Hand">
+                                <TextBlock Text="✕" FontWeight="Bold"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- Contenido del panel -->
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <Panel>
+                        
+                        <!-- FORMULARIO DE CREAR/EDITAR USUARIO -->
+                        <StackPanel IsVisible="{Binding MostrarFormulario}" Margin="28" Spacing="20">
+                            
+                            <!-- Sección: Información del Usuario -->
+                            <Border Background="#f8f9fa" CornerRadius="8" Padding="20">
+                                <StackPanel Spacing="16">
+                                    <TextBlock Text="Información del Usuario" 
+                                               FontSize="16" FontWeight="Bold" Foreground="#003366"/>
+                                    
+                                    <!-- Nombre y Apellidos -->
+                                    <Grid ColumnDefinitions="*,*">
+                                        <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                            <TextBlock Text="Nombre *" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                            <TextBox Text="{Binding FormNombre}" 
+                                                     Watermark="Ingrese el nombre..."/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                            <TextBlock Text="Apellidos *" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                            <TextBox Text="{Binding FormApellidos}" 
+                                                     Watermark="Ingrese los apellidos..."/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Número de Usuario (generado automáticamente) -->
+                                    <StackPanel>
+                                        <TextBlock Text="Número de Usuario" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding FormNumeroUsuario}" 
+                                                 IsReadOnly="True"
+                                                 Background="#f0f0f0"
+                                                 Watermark="Se genera automáticamente"/>
+                                    </StackPanel>
+
+                                    <!-- Correo y Teléfono -->
+                                    <Grid ColumnDefinitions="*,*">
+                                        <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                                            <TextBlock Text="Correo Electrónico *" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                            <TextBox Text="{Binding FormCorreo}" 
+                                                     Watermark="usuario@ejemplo.com"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="1" Margin="6,0,0,0">
+                                            <TextBlock Text="Teléfono" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                            <TextBox Text="{Binding FormTelefono}" 
+                                                     Watermark="+00 000 000 000"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Contraseña (solo al crear) -->
+                                    <StackPanel IsVisible="{Binding !ModoEdicion}">
+                                        <TextBlock Text="Contraseña *" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding FormPassword}" 
+                                                 PasswordChar="●"
+                                                 Watermark="Mínimo 6 caracteres"/>
+                                    </StackPanel>
+
+                                    <!-- Contraseña (al editar - opcional) -->
+                                    <StackPanel IsVisible="{Binding ModoEdicion}">
+                                        <TextBlock Text="Nueva Contraseña (dejar vacío para no cambiar)" 
+                                                   FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <TextBox Text="{Binding FormPassword}" 
+                                                 PasswordChar="●"
+                                                 Watermark="Nueva contraseña (opcional)"/>
+                                    </StackPanel>
+
+                                    <!-- Checkboxes -->
+                                    <StackPanel Spacing="8">
+                                        <CheckBox IsChecked="{Binding FormEsFlotante}" 
+                                                  Content="Usuario Flotante (trabaja en varios locales)"
+                                                  FontSize="14" FontWeight="SemiBold"/>
+                                        
+                                        <CheckBox IsChecked="{Binding FormActivo}" 
+                                                  Content="Usuario Activo"
+                                                  FontSize="14" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Sección: Asignación de Locales -->
+                            <Border Background="#e8f4f8" CornerRadius="8" Padding="20">
+                                <StackPanel Spacing="16">
+                                    <TextBlock Text="Asignación de Locales" 
+                                               FontSize="16" FontWeight="Bold" Foreground="#003366"/>
+                                    
+                                    <TextBlock Text="Asigna los locales donde este usuario podrá trabajar"
+                                               FontSize="13" Foreground="#666" TextWrapping="Wrap"/>
+
+                                    <!-- Búsqueda de local -->
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox Grid.Column="0"
+                                                 Text="{Binding BusquedaLocal}"
+                                                 Watermark="Buscar local por código o nombre..."
+                                                 Margin="0,0,10,0"/>
+                                        
+                                        <Button Grid.Column="1"
+                                                Classes="btn-primary"
+                                                Command="{Binding BuscarLocalCommand}"
+                                                Padding="10,6">
+                                            <TextBlock Text="Buscar" FontSize="13"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Resultados de búsqueda -->
+                                    <Border IsVisible="{Binding MostrarResultadosBusqueda}"
+                                            Background="White"
+                                            BorderBrush="#003366"
+                                            BorderThickness="2"
+                                            CornerRadius="8"
+                                            MaxHeight="200">
+                                        <ScrollViewer>
+                                            <ItemsControl ItemsSource="{Binding ResultadosBusquedaLocales}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Button Background="Transparent"
+                                                                BorderThickness="0"
+                                                                Padding="12"
+                                                                Cursor="Hand"
+                                                                HorizontalContentAlignment="Left"
+                                                                Command="{Binding $parent[ItemsControl].((vm:ManageUsersViewModel)DataContext).SeleccionarLocalCommand}"
+                                                                CommandParameter="{Binding}">
+                                                            <StackPanel Spacing="4">
+                                                                <TextBlock Text="{Binding NombreLocal}"
+                                                                           FontSize="14"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="#003366"/>
+                                                                <TextBlock Text="{Binding CodigoLocal}"
+                                                                           FontSize="12"
+                                                                           Foreground="#666"/>
+                                                            </StackPanel>
+                                                        </Button>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </Border>
+
+                                    <!-- Locales asignados -->
+                                    <StackPanel IsVisible="{Binding LocalesAsignados.Count}" Spacing="8">
+                                        <TextBlock Text="Locales Asignados:"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="#003366"/>
+
+                                        <ItemsControl ItemsSource="{Binding LocalesAsignados}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="White"
+                                                            BorderBrush="#003366"
+                                                            BorderThickness="1"
+                                                            CornerRadius="6"
+                                                            Padding="12"
+                                                            Margin="0,0,0,8">
+                                                        <Grid ColumnDefinitions="*,Auto">
+                                                            <StackPanel Grid.Column="0" Spacing="2">
+                                                                <TextBlock Text="{Binding NombreLocal}"
+                                                                           FontSize="14"
+                                                                           FontWeight="SemiBold"
+                                                                           Foreground="#003366"/>
+                                                                <TextBlock Text="{Binding CodigoLocal}"
+                                                                           FontSize="12"
+                                                                           Foreground="#666"/>
+                                                            </StackPanel>
+
+                                                            <Button Grid.Column="1"
+                                                                    Background="#dc3545"
+                                                                    Foreground="White"
+                                                                    FontSize="12"
+                                                                    Padding="8,4"
+                                                                    CornerRadius="4"
+                                                                    BorderThickness="0"
+                                                                    Command="{Binding $parent[ItemsControl].((vm:ManageUsersViewModel)DataContext).QuitarLocalAsignadoCommand}"
+                                                                    CommandParameter="{Binding}">
+                                                                <TextBlock Text="Eliminar"/>
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+
+                                    <!-- Mensaje si no hay locales -->
+                                    <Border IsVisible="{Binding !LocalesAsignados.Count}"
+                                            Background="White"
+                                            CornerRadius="6"
+                                            Padding="24"
+                                            BorderThickness="1"
+                                            BorderBrush="#ddd">
+                                        <StackPanel Spacing="8" HorizontalAlignment="Center">
+                                            <TextBlock Text="No hay locales asignados" 
+                                                       FontSize="14" Foreground="#666"
+                                                       HorizontalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
+                        </StackPanel>
+
+                        <!-- VER DETALLES DEL USUARIO -->
+                        <StackPanel IsVisible="{Binding !MostrarFormulario}" Margin="28" Spacing="24">
+                            
+                            <!-- Información General -->
+                            <Border Background="#f8f9fa" CornerRadius="8" Padding="20">
+                                <StackPanel Spacing="16">
+                                    <TextBlock Text="Información General" 
+                                               FontSize="16" FontWeight="Bold" Foreground="#003366"/>
+                                    
+                                    <Grid ColumnDefinitions="140,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Nombre Completo:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding UsuarioSeleccionado.NombreCompleto}" Margin="0,0,0,8"/>
+                                        
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Número Usuario:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding UsuarioSeleccionado.NumeroUsuario}" Margin="0,0,0,8"/>
+                                        
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Correo:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding UsuarioSeleccionado.Correo}" Margin="0,0,0,8"/>
+                                        
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Teléfono:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding UsuarioSeleccionado.Telefono}" Margin="0,0,0,8"/>
+                                        
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Tipo:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding UsuarioSeleccionado.TipoUsuario}" Margin="0,0,0,8"/>
+                                        
+                                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Último Acceso:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding UsuarioSeleccionado.UltimoAccesoTexto}" Margin="0,0,0,8"/>
+                                        
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="Estado:" FontWeight="SemiBold"/>
+                                        <Border Grid.Row="6" Grid.Column="1" 
+                                                Background="{Binding UsuarioSeleccionado.EstadoColor}"
+                                                CornerRadius="4" Padding="8,4" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding UsuarioSeleccionado.EstadoTexto}" 
+                                                       Foreground="White" FontWeight="Bold" FontSize="12"/>
+                                        </Border>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Locales Asignados -->
+                            <Border Background="#e8f4f8" CornerRadius="8" Padding="20">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="Locales Asignados" 
+                                               FontSize="16" FontWeight="Bold" Foreground="#003366"/>
+                                    
+                                    <ItemsControl ItemsSource="{Binding LocalesAsignados}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="White" CornerRadius="6" Padding="16" Margin="0,0,0,10"
+                                                        BorderThickness="1" BorderBrush="#ccc">
+                                                    <StackPanel Spacing="8">
+                                                        <TextBlock Text="{Binding CodigoLocal, StringFormat='Código: {0}'}" 
+                                                                   FontSize="15" FontWeight="Bold" Foreground="#003366"/>
+                                                        <TextBlock Text="{Binding NombreLocal}" 
+                                                                   FontSize="14" Foreground="#555" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Direccion}" 
+                                                                   FontSize="13" Foreground="#555" TextWrapping="Wrap"/>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Panel>
+                    </ScrollViewer>
+
+                    <!-- Footer con botones (solo visible en modo formulario) -->
+                    <Border Grid.Row="2" 
+                            IsVisible="{Binding MostrarFormulario}"
+                            Background="#f8f9fa" 
+                            BorderThickness="0,1,0,0" 
+                            BorderBrush="#e0e0e0"
+                            Padding="28,20">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <Button Grid.Column="1"
+                                    Classes="btn-secondary"
+                                    Command="{Binding CerrarPanelDerechoCommand}"
+                                    Margin="0,0,12,0"
+                                    MinWidth="120">
+                                <TextBlock Text="Cancelar"/>
+                            </Button>
+                            <Button Grid.Column="2"
+                                    Classes="btn-primary"
+                                    Command="{Binding GuardarUsuarioCommand}"
+                                    MinWidth="140">
+                                <TextBlock Text="{Binding ModoEdicion, Converter={x:Static converters:ObjectConverters.IsTrue}, ConverterParameter='Actualizar|Crear'}"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ============================================ -->
+        <!-- INDICADOR DE CARGA -->
+        <!-- ============================================ -->
+        <Border IsVisible="{Binding Cargando}"
+                Background="#80000000"
+                Grid.Row="0"
+                Grid.RowSpan="2">
+            <Border Background="White"
+                    CornerRadius="12"
+                    Padding="40"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    BoxShadow="0 8 24 0 #40000000">
+                <StackPanel Spacing="20" HorizontalAlignment="Center">
+                    <TextBlock Text="Procesando..." 
+                               FontSize="18" FontWeight="SemiBold" 
+                               Foreground="#003366"
+                               HorizontalAlignment="Center"/>
+                    <TextBlock Text="Por favor espere..." 
+                               FontSize="14" Foreground="#666"
+                               HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+        </Border>
+
+        <!-- ============================================ -->
+        <!-- MENSAJES DE ÉXITO/ERROR (NOTIFICACIÓN) -->
+        <!-- ============================================ -->
+        <Border IsVisible="{Binding MostrarMensajeExito}"
+                Background="#28a745"
+                CornerRadius="8"
+                Padding="24,18"
+                Margin="32"
+                BoxShadow="0 4 12 0 #40000000"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top"
+                Grid.Row="0"
+                Grid.RowSpan="2">
+            <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="✓" FontSize="28" Foreground="White" FontWeight="Bold"/>
+                <TextBlock Text="{Binding MensajeExito}" 
+                           FontSize="16" FontWeight="SemiBold" 
+                           Foreground="White"
+                           TextWrapping="Wrap"
+                           MaxWidth="600"
+                           VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

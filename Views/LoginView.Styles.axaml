@@ -1,0 +1,294 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ============================================ -->
+    <!-- ESTILOS LOGIN VIEW CON ANIMACIONES CORREGIDAS -->
+    <!-- ============================================ -->
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- COLORES CORPORATIVOS -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <!-- Azul principal: #0b5394 -->
+    <!-- Amarillo: #ffd966 -->
+    <!-- Gris oscuro: #595959 -->
+    <!-- Gris claro: #f3f3f3 -->
+    <!-- Blanco: #ffffff -->
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PANEL DE LOGIN -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.panelLogin">
+        <Setter Property="Background" Value="#ffffff"/>
+        <Setter Property="CornerRadius" Value="25"/>
+        <Setter Property="Padding" Value="50,40"/>
+        <Setter Property="MinWidth" Value="500"/>
+        <Setter Property="MaxWidth" Value="550"/>
+        <Setter Property="BoxShadow" Value="0 8 32 0 #40000000"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- LOGO -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.logoContainer">
+        <Setter Property="BorderBrush" Value="#ffd966"/>
+        <Setter Property="BorderThickness" Value="4"/>
+        <Setter Property="CornerRadius" Value="20"/>
+        <Setter Property="Padding" Value="25,12"/>
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BoxShadow" Value="0 2 8 0 #20000000"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TÍTULO -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="TextBlock.tituloLogin">
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="Margin" Value="0,10,0,0"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- CAMPOS DE TEXTO CON TRANSICIONES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="TextBlock.labelCampo">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#595959"/>
+    </Style>
+    
+    <Style Selector="TextBox.inputLogin">
+        <Setter Property="Background" Value="#f3f3f3"/>
+        <Setter Property="BorderBrush" Value="#0b5394"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="45,12,15,12"/>
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="MinHeight" Value="48"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    
+    <!-- Estado normal -->
+    <Style Selector="TextBox.inputLogin /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="#0b5394"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    
+    <!-- Focus: borde amarillo con animación -->
+    <Style Selector="TextBox.inputLogin:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="#ffd966"/>
+        <Setter Property="BorderThickness" Value="3"/>
+        <Setter Property="BoxShadow" Value="0 0 0 3 #40ffd966"/>
+    </Style>
+    
+    <!-- Hover: sombra sutil -->
+    <Style Selector="TextBox.inputLogin:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="BoxShadow" Value="0 2 8 0 #200b5394"/>
+    </Style>
+    
+    <!-- Watermark (placeholder) -->
+    <Style Selector="TextBox.inputLogin /template/ TextBlock#PART_Watermark">
+        <Setter Property="Foreground" Value="#80595959"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- CHECKBOX RECORDAR -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="CheckBox.checkboxRecordar">
+        <Setter Property="Foreground" Value="#595959"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- MENSAJE DE ERROR -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.mensajeError">
+        <Setter Property="Background" Value="#ffe6e6"/>
+        <Setter Property="BorderBrush" Value="#ff4444"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="Padding" Value="15"/>
+        <Setter Property="Margin" Value="0,0,0,10"/>
+    </Style>
+    
+    <Style Selector="TextBlock.textoError">
+        <Setter Property="Foreground" Value="#cc0000"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- BOTÓN INICIAR SESIÓN CON ANIMACIONES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Button.btnLogin">
+        <Setter Property="Background" Value="#0b5394"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Padding" Value="20,15"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="3"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    </Style>
+    
+    <Style Selector="Button.btnLogin /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#0b5394"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    
+    <Style Selector="Button.btnLogin:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#ffd966"/>
+        <Setter Property="TextBlock.Foreground" Value="#0b5394"/>
+    </Style>
+    
+    <Style Selector="Button.btnLogin:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#0d6bb8"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+    
+    <Style Selector="Button.btnLogin:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#c0c0c0"/>
+        <Setter Property="TextBlock.Foreground" Value="#808080"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ENLACE RECUPERAR CONTRASEÑA -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Button.btnRecuperarPassword">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="5"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Foreground" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    
+    <Style Selector="Button.btnRecuperarPassword:pointerover">
+        <Setter Property="Foreground" Value="#ffd966"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- BOTÓN CAMBIAR IDIOMA -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Button.btnIdioma">
+        <Setter Property="Background" Value="#ffffff"/>
+        <Setter Property="BorderBrush" Value="#0b5394"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20,12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinWidth" Value="70"/>
+        <Setter Property="Height" Value="45"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    
+    <Style Selector="Button.btnIdioma /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#ffffff"/>
+        <Setter Property="BorderBrush" Value="#0b5394"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.2"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    
+    <Style Selector="Button.btnIdioma:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#f8f8f8"/>
+        <Setter Property="BorderBrush" Value="#0b5394"/>
+    </Style>
+    
+    <Style Selector="TextBlock.textoIdioma">
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    
+    <Style Selector="TextBlock.labelIdioma">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- VERSIÓN Y SOPORTE -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="TextBlock.textoVersion">
+        <Setter Property="Foreground" Value="#90595959"/>
+        <Setter Property="FontSize" Value="11"/>
+    </Style>
+    
+    <Style Selector="Button.btnSoporte">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Padding" Value="5"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- LOADING SPINNER (sin animación compleja) -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.spinner">
+        <Setter Property="Width" Value="20"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="BorderBrush" Value="White"/>
+        <Setter Property="BorderThickness" Value="3"/>
+        <Setter Property="CornerRadius" Value="10"/>
+    </Style>
+    
+    <Style Selector="Border.spinnerGrande">
+        <Setter Property="Width" Value="60"/>
+        <Setter Property="Height" Value="60"/>
+        <Setter Property="BorderBrush" Value="#ffd966"/>
+        <Setter Property="BorderThickness" Value="6"/>
+        <Setter Property="CornerRadius" Value="30"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- COPYRIGHT -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="TextBlock.textoCopyright">
+        <Setter Property="Foreground" Value="#80ffffff"/>
+        <Setter Property="FontSize" Value="12"/>
+    </Style>
+
+</Styles>

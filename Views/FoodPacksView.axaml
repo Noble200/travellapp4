@@ -1,0 +1,122 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Allva.Desktop.Views.FoodPacksView"
+             xmlns:vm="using:Allva.Desktop.ViewModels"
+             Background="#FFF8E8">
+
+    <Design.DataContext>
+        <vm:FoodPacksViewModel/>
+    </Design.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ========== HEADER ========== -->
+        <Border Grid.Row="0" Background="#FFC600" Padding="30,20" BoxShadow="0 2 10 0 #40000000">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Background="White" CornerRadius="10" Padding="25,12" BorderBrush="#FFC600" BorderThickness="3">
+                    <TextBlock Text="Allva" FontSize="32" FontWeight="Bold" FontStyle="Italic" Foreground="#003566"/>
+                </Border>
+
+                <TextBlock Grid.Column="1" Text="Pack de Alimentos" FontSize="28" FontWeight="SemiBold" 
+                           Foreground="#003566" VerticalAlignment="Center" Margin="40,0,0,0"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="15">
+                    <Border Background="White" CornerRadius="25" Width="50" Height="50" BoxShadow="0 2 8 0 #30000000">
+                        <TextBlock Text="🔔" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border Background="White" CornerRadius="25" Width="50" Height="50" BoxShadow="0 2 8 0 #30000000">
+                        <TextBlock Text="👤" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ========== CONTENIDO ========== -->
+        <ScrollViewer Grid.Row="1" Padding="40">
+            <StackPanel Spacing="30">
+
+                <!-- Packs disponibles en Grid -->
+                <ItemsControl>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+
+                    <!-- Pack Básico -->
+                    <Border Background="White" CornerRadius="15" BoxShadow="0 4 15 0 #30000000" 
+                            Width="350" Margin="0,0,20,20" Padding="30">
+                        <StackPanel Spacing="15">
+                            <Border Background="#90EE90" Height="180" CornerRadius="10">
+                                <TextBlock Text="🥗" FontSize="80" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Pack Básico" FontSize="24" FontWeight="Bold" Foreground="#003566"/>
+                            <TextBlock Text="Productos esenciales para la familia" FontSize="14" Foreground="#666" TextWrapping="Wrap"/>
+                            <TextBlock Text="45.00 €" FontSize="28" FontWeight="Bold" Foreground="#FFC600"/>
+                            <Button Content="RESERVAR" Background="#003566" Foreground="White" 
+                                    Height="45" FontSize="16" FontWeight="Bold" CornerRadius="8"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Pack Premium -->
+                    <Border Background="White" CornerRadius="15" BoxShadow="0 4 15 0 #30000000" 
+                            Width="350" Margin="0,0,20,20" Padding="30">
+                        <StackPanel Spacing="15">
+                            <Border Background="#FFD700" Height="180" CornerRadius="10">
+                                <TextBlock Text="⭐" FontSize="80" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Pack Premium" FontSize="24" FontWeight="Bold" Foreground="#003566"/>
+                            <TextBlock Text="Selección gourmet de alimentos" FontSize="14" Foreground="#666" TextWrapping="Wrap"/>
+                            <TextBlock Text="89.00 €" FontSize="28" FontWeight="Bold" Foreground="#FFC600"/>
+                            <Button Content="RESERVAR" Background="#003566" Foreground="White" 
+                                    Height="45" FontSize="16" FontWeight="Bold" CornerRadius="8"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Pack Vegetariano -->
+                    <Border Background="White" CornerRadius="15" BoxShadow="0 4 15 0 #30000000" 
+                            Width="350" Margin="0,0,20,20" Padding="30">
+                        <StackPanel Spacing="15">
+                            <Border Background="#98FB98" Height="180" CornerRadius="10">
+                                <TextBlock Text="🥬" FontSize="80" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Pack Vegetariano" FontSize="24" FontWeight="Bold" Foreground="#003566"/>
+                            <TextBlock Text="Productos vegetales orgánicos" FontSize="14" Foreground="#666" TextWrapping="Wrap"/>
+                            <TextBlock Text="67.00 €" FontSize="28" FontWeight="Bold" Foreground="#FFC600"/>
+                            <Button Content="RESERVAR" Background="#003566" Foreground="White" 
+                                    Height="45" FontSize="16" FontWeight="Bold" CornerRadius="8"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Pack Familiar -->
+                    <Border Background="White" CornerRadius="15" BoxShadow="0 4 15 0 #30000000" 
+                            Width="350" Margin="0,0,20,20" Padding="30">
+                        <StackPanel Spacing="15">
+                            <Border Background="#FFB6C1" Height="180" CornerRadius="10">
+                                <TextBlock Text="👨‍👩‍👧‍👦" FontSize="80" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="Pack Familiar" FontSize="24" FontWeight="Bold" Foreground="#003566"/>
+                            <TextBlock Text="Para familias numerosas" FontSize="14" Foreground="#666" TextWrapping="Wrap"/>
+                            <TextBlock Text="125.00 €" FontSize="28" FontWeight="Bold" Foreground="#FFC600"/>
+                            <Button Content="RESERVAR" Background="#003566" Foreground="White" 
+                                    Height="45" FontSize="16" FontWeight="Bold" CornerRadius="8"/>
+                        </StackPanel>
+                    </Border>
+
+                </ItemsControl>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

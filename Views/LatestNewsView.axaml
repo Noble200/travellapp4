@@ -1,0 +1,237 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Allva.Desktop.Views.LatestNewsView"
+             xmlns:vm="using:Allva.Desktop.ViewModels"
+             Background="#FFF8E8">
+
+    <Design.DataContext>
+        <vm:LatestNewsViewModel/>
+    </Design.DataContext>
+
+    <Grid>
+        <!-- Layout principal -->
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Content -->
+        </Grid.RowDefinitions>
+
+        <!-- ========== HEADER CON LOGO ========== -->
+        <Border Grid.Row="0" 
+                Background="#FFC600" 
+                Padding="30,20"
+                BoxShadow="0 2 10 0 #40000000">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Logo Allva -->
+                <Border Grid.Column="0"
+                        Background="White"
+                        CornerRadius="10"
+                        Padding="25,12"
+                        BorderBrush="#FFC600"
+                        BorderThickness="3">
+                    <TextBlock Text="Allva"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               FontStyle="Italic"
+                               Foreground="#003566"/>
+                </Border>
+
+                <!-- Título del módulo -->
+                <TextBlock Grid.Column="1"
+                           Text="Últimas actualizaciones"
+                           FontSize="28"
+                           FontWeight="SemiBold"
+                           Foreground="#003566"
+                           VerticalAlignment="Center"
+                           Margin="40,0,0,0"/>
+
+                <!-- Iconos de usuario y notificaciones -->
+                <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal" 
+                            Spacing="15">
+                    <!-- Notificaciones -->
+                    <Border Background="White"
+                            CornerRadius="25"
+                            Width="50" Height="50"
+                            BoxShadow="0 2 8 0 #30000000">
+                        <TextBlock Text="🔔"
+                                   FontSize="24"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    
+                    <!-- Usuario -->
+                    <Border Background="White"
+                            CornerRadius="25"
+                            Width="50" Height="50"
+                            BoxShadow="0 2 8 0 #30000000">
+                        <TextBlock Text="👤"
+                                   FontSize="24"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ========== CONTENIDO PRINCIPAL ========== -->
+        <ScrollViewer Grid.Row="1" Padding="40">
+            <StackPanel Spacing="25">
+
+                <!-- Tarjeta de Noticia 1 -->
+                <Border Background="White"
+                        CornerRadius="15"
+                        BoxShadow="0 4 15 0 #30000000"
+                        Padding="0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="3*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Contenido texto -->
+                        <Border Grid.Column="0"
+                                Background="#003566"
+                                CornerRadius="15,0,0,15"
+                                Padding="35">
+                            <StackPanel VerticalAlignment="Center" Spacing="10">
+                                <TextBlock Text="NUEVO DESTINO DISPONIBLE"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           TextWrapping="Wrap"/>
+                                
+                                <TextBlock Text="EN PACKS DE VIAJES:"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           TextWrapping="Wrap"/>
+                                
+                                <TextBlock Text="DESTINO TOKIO"
+                                           FontSize="28"
+                                           FontWeight="ExtraBold"
+                                           Foreground="#FFC600"
+                                           Margin="0,15,0,0"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Imagen -->
+                        <Border Grid.Column="1"
+                                CornerRadius="0,15,15,0"
+                                ClipToBounds="True">
+                            <Rectangle Fill="#E8B4B8"
+                                       Height="200"/>
+                            <!-- Aquí irá la imagen real cuando se implemente -->
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Tarjeta de Noticia 2 -->
+                <Border Background="White"
+                        CornerRadius="15"
+                        BoxShadow="0 4 15 0 #30000000"
+                        Padding="0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="3*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Contenido texto -->
+                        <Border Grid.Column="0"
+                                Background="#003566"
+                                CornerRadius="15,0,0,15"
+                                Padding="35">
+                            <StackPanel VerticalAlignment="Center" Spacing="10">
+                                <TextBlock Text="BILLETES DE AVIÓN EN"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           TextWrapping="Wrap"/>
+                                
+                                <TextBlock Text="DESCUENTO:"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           TextWrapping="Wrap"/>
+                                
+                                <TextBlock Text="AHORA DESDE 1100€"
+                                           FontSize="28"
+                                           FontWeight="ExtraBold"
+                                           Foreground="#FFC600"
+                                           Margin="0,15,0,0"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Imagen -->
+                        <Border Grid.Column="1"
+                                CornerRadius="0,15,15,0"
+                                ClipToBounds="True">
+                            <Rectangle Fill="#87CEEB"
+                                       Height="200"/>
+                            <!-- Aquí irá la imagen real cuando se implemente -->
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Tarjeta de Noticia 3 -->
+                <Border Background="White"
+                        CornerRadius="15"
+                        BoxShadow="0 4 15 0 #30000000"
+                        Padding="0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="3*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Contenido texto -->
+                        <Border Grid.Column="0"
+                                Background="#003566"
+                                CornerRadius="15,0,0,15"
+                                Padding="35">
+                            <StackPanel VerticalAlignment="Center" Spacing="10">
+                                <TextBlock Text="NUEVOS PACKS DE"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           TextWrapping="Wrap"/>
+                                
+                                <TextBlock Text="ALIMENTOS DISPONIBLES"
+                                           FontSize="18"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           TextWrapping="Wrap"/>
+                                
+                                <TextBlock Text="VARIEDAD PREMIUM"
+                                           FontSize="28"
+                                           FontWeight="ExtraBold"
+                                           Foreground="#FFC600"
+                                           Margin="0,15,0,0"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Imagen -->
+                        <Border Grid.Column="1"
+                                CornerRadius="0,15,15,0"
+                                ClipToBounds="True">
+                            <Rectangle Fill="#90EE90"
+                                       Height="200"/>
+                            <!-- Aquí irá la imagen real cuando se implemente -->
+                        </Border>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

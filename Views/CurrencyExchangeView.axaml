@@ -1,0 +1,255 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Allva.Desktop.Views.CurrencyExchangeView"
+             xmlns:vm="using:Allva.Desktop.ViewModels"
+             Background="#FFF8E8">
+
+    <Design.DataContext>
+        <vm:CurrencyExchangeViewModel/>
+    </Design.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Header -->
+            <RowDefinition Height="*"/>    <!-- Content -->
+        </Grid.RowDefinitions>
+
+        <!-- ========== HEADER CON LOGO ========== -->
+        <Border Grid.Row="0" 
+                Background="#FFC600" 
+                Padding="30,20"
+                BoxShadow="0 2 10 0 #40000000">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Logo Allva -->
+                <Border Grid.Column="0"
+                        Background="White"
+                        CornerRadius="10"
+                        Padding="25,12"
+                        BorderBrush="#FFC600"
+                        BorderThickness="3">
+                    <TextBlock Text="Allva"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               FontStyle="Italic"
+                               Foreground="#003566"/>
+                </Border>
+
+                <!-- Título del módulo -->
+                <TextBlock Grid.Column="1"
+                           Text="Compra de Divisas"
+                           FontSize="28"
+                           FontWeight="SemiBold"
+                           Foreground="#003566"
+                           VerticalAlignment="Center"
+                           Margin="40,0,0,0"/>
+
+                <!-- Iconos -->
+                <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal" 
+                            Spacing="15">
+                    <Border Background="White" CornerRadius="25" Width="50" Height="50" BoxShadow="0 2 8 0 #30000000">
+                        <TextBlock Text="🔔" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border Background="White" CornerRadius="25" Width="50" Height="50" BoxShadow="0 2 8 0 #30000000">
+                        <TextBlock Text="👤" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ========== CONTENIDO ========== -->
+        <ScrollViewer Grid.Row="1" Padding="40">
+            <StackPanel Spacing="30">
+
+                <!-- Calculadora de Divisas -->
+                <Border Background="White"
+                        CornerRadius="15"
+                        BoxShadow="0 4 15 0 #30000000"
+                        Padding="40">
+                    <StackPanel Spacing="25">
+                        <TextBlock Text="Calculadora de Cambio"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#003566"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Divisa Origen -->
+                            <StackPanel Grid.Column="0" Spacing="10">
+                                <TextBlock Text="Moneda Origen" FontWeight="SemiBold" Foreground="#003566"/>
+                                <ComboBox Width="250" Height="45" FontSize="16" SelectedIndex="0">
+                                    <ComboBoxItem Content="EUR - Euro"/>
+                                    <ComboBoxItem Content="USD - Dólar USA"/>
+                                    <ComboBoxItem Content="GBP - Libra"/>
+                                    <ComboBoxItem Content="JPY - Yen"/>
+                                </ComboBox>
+                                
+                                <TextBlock Text="Cantidad" FontWeight="SemiBold" Foreground="#003566" Margin="0,10,0,0"/>
+                                <TextBox Width="250" Height="45" FontSize="16" Watermark="0.00"/>
+                            </StackPanel>
+
+                            <!-- Icono de intercambio -->
+                            <Border Grid.Column="1"
+                                    Width="60" Height="60"
+                                    Background="#FFC600"
+                                    CornerRadius="30"
+                                    VerticalAlignment="Center"
+                                    Margin="20,50,20,0">
+                                <TextBlock Text="⇄"
+                                           FontSize="28"
+                                           FontWeight="Bold"
+                                           Foreground="White"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </Border>
+
+                            <!-- Divisa Destino -->
+                            <StackPanel Grid.Column="2" Spacing="10">
+                                <TextBlock Text="Moneda Destino" FontWeight="SemiBold" Foreground="#003566"/>
+                                <ComboBox Width="250" Height="45" FontSize="16" SelectedIndex="1">
+                                    <ComboBoxItem Content="EUR - Euro"/>
+                                    <ComboBoxItem Content="USD - Dólar USA"/>
+                                    <ComboBoxItem Content="GBP - Libra"/>
+                                    <ComboBoxItem Content="JPY - Yen"/>
+                                </ComboBox>
+                                
+                                <TextBlock Text="Recibirás" FontWeight="SemiBold" Foreground="#003566" Margin="0,10,0,0"/>
+                                <TextBox Width="250" Height="45" FontSize="16" Watermark="0.00" IsReadOnly="True" Background="#F0F0F0"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Botón de Calcular -->
+                        <Button Content="CALCULAR CONVERSIÓN"
+                                Background="#003566"
+                                Foreground="White"
+                                Height="50"
+                                FontSize="16"
+                                FontWeight="Bold"
+                                CornerRadius="8"
+                                HorizontalAlignment="Center"
+                                Width="300"
+                                Margin="0,20,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Tabla de Tasas de Cambio -->
+                <Border Background="White"
+                        CornerRadius="15"
+                        BoxShadow="0 4 15 0 #30000000"
+                        Padding="40">
+                    <StackPanel Spacing="20">
+                        <TextBlock Text="Tasas de Cambio Actuales"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="#003566"/>
+
+                        <!-- Header de tabla -->
+                        <Border Background="#FFC600" 
+                                Padding="20,15"
+                                CornerRadius="8">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBlock Grid.Column="0" Text="Divisa" FontWeight="Bold" Foreground="#003566"/>
+                                <TextBlock Grid.Column="1" Text="Código" FontWeight="Bold" Foreground="#003566"/>
+                                <TextBlock Grid.Column="2" Text="Compra" FontWeight="Bold" Foreground="#003566"/>
+                                <TextBlock Grid.Column="3" Text="Venta" FontWeight="Bold" Foreground="#003566"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Filas de datos -->
+                        <StackPanel Spacing="2">
+                            <!-- Fila 1: USD -->
+                            <Border Background="#F8F8F8" Padding="20,15" CornerRadius="5">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Dólar USA" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="1" Text="USD" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="2" Text="1.08" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="3" Text="1.10" Foreground="#003566"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Fila 2: GBP -->
+                            <Border Background="White" Padding="20,15" CornerRadius="5">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Libra Esterlina" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="1" Text="GBP" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="2" Text="0.86" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="3" Text="0.88" Foreground="#003566"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Fila 3: JPY -->
+                            <Border Background="#F8F8F8" Padding="20,15" CornerRadius="5">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Yen Japonés" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="1" Text="JPY" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="2" Text="158.50" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="3" Text="160.00" Foreground="#003566"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Fila 4: CHF -->
+                            <Border Background="White" Padding="20,15" CornerRadius="5">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="2*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Franco Suizo" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="1" Text="CHF" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="2" Text="0.94" Foreground="#003566"/>
+                                    <TextBlock Grid.Column="3" Text="0.96" Foreground="#003566"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+
+                        <TextBlock Text="* Tasas actualizadas: Hoy 15:30"
+                                   FontSize="12"
+                                   Foreground="#666666"
+                                   HorizontalAlignment="Right"
+                                   Margin="0,10,0,0"/>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>

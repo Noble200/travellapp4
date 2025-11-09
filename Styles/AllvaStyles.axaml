@@ -1,0 +1,229 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ============================================ -->
+    <!-- ALLVA - ESTILOS GLOBALES -->
+    <!-- Colores corporativos: #0b5394 (Azul) y #ffd966 (Amarillo) -->
+    <!-- ============================================ -->
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- RECURSOS: COLORES Y BRUSHES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Styles.Resources>
+        <!-- Colores principales -->
+        <Color x:Key="AllvaBluePrimary">#0b5394</Color>
+        <Color x:Key="AllvaBlueLight">#1a6bb5</Color>
+        <Color x:Key="AllvaBlueDark">#084171</Color>
+        <Color x:Key="AllvaYellow">#ffd966</Color>
+        <Color x:Key="AllvaYellowDark">#ffc933</Color>
+        <Color x:Key="AllvaYellowLight">#fff4cc</Color>
+        <Color x:Key="AllvaGrayDark">#595959</Color>
+        <Color x:Key="AllvaGrayMedium">#cccccc</Color>
+        <Color x:Key="AllvaGrayLight">#f3f3f3</Color>
+        <Color x:Key="AllvaWhite">#ffffff</Color>
+        
+        <!-- Colores de estado -->
+        <Color x:Key="AllvaSuccess">#4caf50</Color>
+        <Color x:Key="AllvaWarning">#ff9800</Color>
+        <Color x:Key="AllvaDanger">#d32f2f</Color>
+        <Color x:Key="AllvaInfo">#2196f3</Color>
+        
+        <!-- Brushes principales -->
+        <SolidColorBrush x:Key="AllvaBluePrimaryBrush" Color="{StaticResource AllvaBluePrimary}"/>
+        <SolidColorBrush x:Key="AllvaBlueLightBrush" Color="{StaticResource AllvaBlueLight}"/>
+        <SolidColorBrush x:Key="AllvaBlueDarkBrush" Color="{StaticResource AllvaBlueDark}"/>
+        <SolidColorBrush x:Key="AllvaYellowBrush" Color="{StaticResource AllvaYellow}"/>
+        <SolidColorBrush x:Key="AllvaYellowDarkBrush" Color="{StaticResource AllvaYellowDark}"/>
+        <SolidColorBrush x:Key="AllvaYellowLightBrush" Color="{StaticResource AllvaYellowLight}"/>
+        <SolidColorBrush x:Key="AllvaGrayDarkBrush" Color="{StaticResource AllvaGrayDark}"/>
+        <SolidColorBrush x:Key="AllvaGrayMediumBrush" Color="{StaticResource AllvaGrayMedium}"/>
+        <SolidColorBrush x:Key="AllvaGrayLightBrush" Color="{StaticResource AllvaGrayLight}"/>
+        <SolidColorBrush x:Key="AllvaWhiteBrush" Color="{StaticResource AllvaWhite}"/>
+        <SolidColorBrush x:Key="AllvaSuccessBrush" Color="{StaticResource AllvaSuccess}"/>
+        <SolidColorBrush x:Key="AllvaWarningBrush" Color="{StaticResource AllvaWarning}"/>
+        <SolidColorBrush x:Key="AllvaDangerBrush" Color="{StaticResource AllvaDanger}"/>
+        <SolidColorBrush x:Key="AllvaInfoBrush" Color="{StaticResource AllvaInfo}"/>
+        
+        <!-- Gradiente azul -->
+        <LinearGradientBrush x:Key="AllvaBlueGradientBrush" StartPoint="0%,0%" EndPoint="0%,100%">
+            <GradientStop Color="{StaticResource AllvaBluePrimary}" Offset="0"/>
+            <GradientStop Color="{StaticResource AllvaBlueDark}" Offset="1"/>
+        </LinearGradientBrush>
+    </Styles.Resources>
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ESTILOS DE BOTONES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <!-- Botón Primario (Azul) -->
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaWhiteBrush}"/>
+        <Setter Property="Padding" Value="14,10"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+    
+    <Style Selector="Button.primary:pointerover">
+        <Setter Property="Background" Value="{StaticResource AllvaBlueDarkBrush}"/>
+    </Style>
+    
+    <Style Selector="Button.primary:pressed">
+        <Setter Property="Background" Value="{StaticResource AllvaBlueDarkBrush}"/>
+        <Setter Property="Opacity" Value="0.8"/>
+    </Style>
+    
+    <!-- Botón Secundario (Amarillo) -->
+    <Style Selector="Button.secondary">
+        <Setter Property="Background" Value="{StaticResource AllvaYellowBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+        <Setter Property="Padding" Value="14,10"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+    
+    <Style Selector="Button.secondary:pointerover">
+        <Setter Property="Background" Value="{StaticResource AllvaYellowDarkBrush}"/>
+    </Style>
+    
+    <!-- Botón Outline -->
+    <Style Selector="Button.outline">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="Padding" Value="14,10"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+    
+    <Style Selector="Button.outline:pointerover">
+        <Setter Property="Background" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaWhiteBrush}"/>
+    </Style>
+    
+    <!-- Botón Danger -->
+    <Style Selector="Button.danger">
+        <Setter Property="Background" Value="{StaticResource AllvaDangerBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaWhiteBrush}"/>
+        <Setter Property="Padding" Value="10,8"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ESTILOS DE TEXTBOX -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="TextBox.allva">
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AllvaGrayMediumBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource AllvaWhiteBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaGrayDarkBrush}"/>
+        <Setter Property="FontSize" Value="14"/>
+    </Style>
+    
+    <Style Selector="TextBox.allva:focus">
+        <Setter Property="BorderBrush" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ESTILOS DE COMBOBOX -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="ComboBox.allva">
+        <Setter Property="Padding" Value="10"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AllvaGrayMediumBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource AllvaWhiteBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaGrayDarkBrush}"/>
+    </Style>
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- SIDEBAR MENU -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.sidebar">
+        <Setter Property="Background" Value="{StaticResource AllvaBlueGradientBrush}"/>
+        <Setter Property="Width" Value="240"/>
+    </Style>
+    
+    <Style Selector="Button.menu-item">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaWhiteBrush}"/>
+        <Setter Property="Padding" Value="16,14"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="BorderThickness" Value="0,0,0,4"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    
+    <Style Selector="Button.menu-item:pointerover">
+        <Setter Property="Background" Value="#20FFFFFF"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AllvaYellowBrush}"/>
+    </Style>
+    
+    <Style Selector="Button.menu-item.active">
+        <Setter Property="Background" Value="{StaticResource AllvaYellowBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="BorderBrush" Value="{StaticResource AllvaBlueDarkBrush}"/>
+    </Style>
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- CARDS / PANELS -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{StaticResource AllvaWhiteBrush}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="BoxShadow" Value="0 2 8 0 #15000000"/>
+    </Style>
+    
+    <Style Selector="Border.card-header">
+        <Setter Property="Background" Value="{StaticResource AllvaYellowBrush}"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="CornerRadius" Value="12,12,0,0"/>
+    </Style>
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- HEADERS / TITLES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="TextBlock.page-title">
+        <Setter Property="FontSize" Value="26"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+    </Style>
+    
+    <Style Selector="TextBlock.section-title">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaBluePrimaryBrush}"/>
+    </Style>
+    
+    <Style Selector="TextBlock.subtitle">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource AllvaGrayDarkBrush}"/>
+    </Style>
+    
+</Styles>

@@ -1,0 +1,134 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Allva.Desktop.ViewModels.Admin"
+             x:Class="Allva.Desktop.Views.Admin.AdminDashboardView"
+             x:DataType="vm:AdminDashboardViewModel">
+
+    <Design.DataContext>
+        <vm:AdminDashboardViewModel />
+    </Design.DataContext>
+
+    <!-- Importar estilos específicos del admin -->
+    <UserControl.Styles>
+        <StyleInclude Source="AdminDashboardView.Styles.axaml"/>
+    </UserControl.Styles>
+
+    <!-- ============================================ -->
+    <!-- PANEL DE ADMINISTRACIÓN -->
+    <!-- 3 módulos: Gestión de Comercios, Usuarios y Usuarios Allva -->
+    <!-- ============================================ -->
+
+    <Grid>
+        <!-- Fondo amarillo corporativo -->
+        <Border Classes="admin-background" />
+
+        <!-- Grid principal: Sidebar + Contenido -->
+        <Grid ColumnDefinitions="220,*">
+            
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- SIDEBAR BLANCO (Menu lateral izquierdo) -->
+            <!-- ═══════════════════════════════════════════ -->
+            <Border Grid.Column="0" Classes="admin-sidebar">
+                <StackPanel>
+                    
+                    <!-- Logo Allva -->
+                    <Border Classes="admin-logo-container">
+                        <TextBlock Classes="admin-logo-text"/>
+                    </Border>
+
+                    <!-- Separador -->
+                    <Border Classes="admin-menu-separator"/>
+
+                    <!-- Sección: Panel de Administración -->
+                    <TextBlock Text="Panel de Administración"
+                               FontSize="13"
+                               Foreground="#808080"
+                               Padding="20,15,20,8"
+                               FontWeight="Medium"/>
+
+                    <!-- Menú de navegación - 3 módulos -->
+                    <StackPanel>
+                        
+                        <!-- Gestión de comercios -->
+                        <Button Classes="admin-menu-item"
+                                Classes.active="{Binding SelectedModule, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='comercios'}"
+                                Command="{Binding NavigateToModuleCommand}"
+                                CommandParameter="comercios"
+                                IsVisible="{Binding MostrarGestionComercios}">
+                            <TextBlock Text="Gestión de comercios" Classes="admin-menu-text"/>
+                        </Button>
+
+                        <!-- Gestión de usuarios (locales) -->
+                        <Button Classes="admin-menu-item"
+                                Classes.active="{Binding SelectedModule, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='usuarios'}"
+                                Command="{Binding NavigateToModuleCommand}"
+                                CommandParameter="usuarios"
+                                IsVisible="{Binding MostrarGestionUsuarios}">
+                            <TextBlock Text="Gestión de usuarios" Classes="admin-menu-text"/>
+                        </Button>
+
+                        <!-- Usuarios Allva (administradores) -->
+                        <Button Classes="admin-menu-item"
+                                Classes.active="{Binding SelectedModule, Converter={x:Static ObjectConverters.Equal}, ConverterParameter='usuarios_allva'}"
+                                Command="{Binding NavigateToModuleCommand}"
+                                CommandParameter="usuarios_allva"
+                                IsVisible="{Binding MostrarUsuariosAllva}">
+                            <TextBlock Text="Usuarios Allva" Classes="admin-menu-text"/>
+                        </Button>
+
+                    </StackPanel>
+
+                    <!-- Espaciador para empujar el botón de cerrar sesión al fondo -->
+                    <Border Height="1" Margin="0,30,0,0"/>
+
+                    <!-- Botón Cerrar Sesión al final -->
+                    <Button Classes="admin-menu-item"
+                            Command="{Binding LogoutCommand}"
+                            VerticalAlignment="Bottom"
+                            Margin="0,20,0,20">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <TextBlock Text="🚪" FontSize="16" VerticalAlignment="Center"/>
+                            <TextBlock Text="Cerrar Sesión" Classes="admin-menu-text"/>
+                        </StackPanel>
+                    </Button>
+
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════ -->
+            <!-- CONTENIDO PRINCIPAL (Área de trabajo) -->
+            <!-- ═══════════════════════════════════════════ -->
+            <Border Grid.Column="1" Classes="admin-content-panel">
+                
+                <Grid ColumnDefinitions="*" RowDefinitions="*">
+
+                    <!-- ═══════════════════════════════════════════ -->
+                    <!-- ÁREA DE CONTENIDO PRINCIPAL -->
+                    <!-- ═══════════════════════════════════════════ -->
+                    <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                        
+                        <!-- Header del módulo (azul oscuro) -->
+                        <Border Grid.Row="0" Classes="admin-module-header">
+                            <TextBlock Text="{Binding SelectedModuleTitle}" 
+                                       Classes="admin-module-title"/>
+                        </Border>
+
+                        <!-- Contenido dinámico del módulo -->
+                        <ScrollViewer Grid.Row="1" 
+                                      VerticalScrollBarVisibility="Auto"
+                                      Padding="0">
+                            <ContentControl Content="{Binding CurrentView}"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Stretch"/>
+                        </ScrollViewer>
+
+                    </Grid>
+
+                </Grid>
+
+            </Border>
+
+        </Grid>
+    </Grid>
+
+</UserControl>

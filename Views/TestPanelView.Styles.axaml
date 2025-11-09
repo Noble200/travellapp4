@@ -1,0 +1,262 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- ============================================ -->
+    <!-- ESTILOS DEL PANEL DE TESTEO -->
+    <!-- ============================================ -->
+    
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- COLORES CORPORATIVOS ALLVA -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.colorPrimary">
+        <Setter Property="Background" Value="#0b5394"/>
+    </Style>
+    
+    <Style Selector="Border.colorSecondary">
+        <Setter Property="Background" Value="#ffd966"/>
+    </Style>
+    
+    <Style Selector="Border.colorGrisOscuro">
+        <Setter Property="Background" Value="#595959"/>
+    </Style>
+    
+    <Style Selector="Border.colorGrisClaro">
+        <Setter Property="Background" Value="#f3f3f3"/>
+    </Style>
+    
+    <Style Selector="Border.colorBlanco">
+        <Setter Property="Background" Value="#ffffff"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- BOTONES - SIEMPRE VISIBLES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <!-- Botón Primario (Azul) - NUNCA DESAPARECE -->
+    <Style Selector="Button.btnPrimary">
+        <Setter Property="Background" Value="#0b5394"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Padding" Value="18,10"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+    
+    <!-- Estado NORMAL del template -->
+    <Style Selector="Button.btnPrimary /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#0b5394"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+    
+    <!-- Al pasar el mouse: BORDE AMARILLO, FONDO AZUL SIEMPRE -->
+    <Style Selector="Button.btnPrimary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#0b5394"/>
+        <Setter Property="BorderBrush" Value="#ffd966"/>
+        <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+    
+    <!-- Al hacer clic: FONDO AZUL SIEMPRE -->
+    <Style Selector="Button.btnPrimary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#0b5394"/>
+        <Setter Property="BorderBrush" Value="#ffed99"/>
+    </Style>
+
+    <!-- Botón Secundario (Amarillo) - NUNCA DESAPARECE -->
+    <Style Selector="Button.btnSecondary">
+        <Setter Property="Background" Value="#ffd966"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="Padding" Value="18,10"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+    
+    <!-- Estado NORMAL del template -->
+    <Style Selector="Button.btnSecondary /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#ffd966"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+    </Style>
+    
+    <!-- Al pasar el mouse: BORDE AZUL, FONDO AMARILLO SIEMPRE -->
+    <Style Selector="Button.btnSecondary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#ffd966"/>
+        <Setter Property="BorderBrush" Value="#0b5394"/>
+        <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+    
+    <!-- Al hacer clic: FONDO AMARILLO SIEMPRE -->
+    <Style Selector="Button.btnSecondary:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="#ffd966"/>
+        <Setter Property="BorderBrush" Value="#084070"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- CAMPOS DE TEXTO - NUNCA SE PONEN GRISES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="TextBox.inputField">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="BorderBrush" Value="#0b5394"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="MinHeight" Value="40"/>
+        <Setter Property="CaretBrush" Value="#0b5394"/>
+        <Setter Property="SelectionBrush" Value="#0b539450"/>
+        <Setter Property="SelectionForegroundBrush" Value="#000000"/>
+    </Style>
+    
+    <!-- Placeholder (Watermark) - GRIS CLARO -->
+    <Style Selector="TextBox.inputField /template/ TextBlock#PART_Watermark">
+        <Setter Property="Foreground" Value="#aaaaaa"/>
+        <Setter Property="FontStyle" Value="Normal"/>
+    </Style>
+    
+    <!-- FORZAR: Al pasar mouse - FONDO BLANCO SIEMPRE -->
+    <Style Selector="TextBox.inputField:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="#0d6bb8"/>
+        <Setter Property="BorderThickness" Value="2"/>
+    </Style>
+    
+    <!-- FORZAR: Al hacer clic - FONDO BLANCO SIEMPRE -->
+    <Style Selector="TextBox.inputField:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="BorderBrush" Value="#ffd966"/>
+        <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+    
+    <!-- FORZAR: Al escribir - FONDO BLANCO SIEMPRE -->
+    <Style Selector="TextBox.inputField /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="White"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ETIQUETAS (LABELS) -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.labelAmarillo">
+        <Setter Property="Background" Value="#ffd966"/>
+        <Setter Property="CornerRadius" Value="20"/>
+        <Setter Property="Padding" Value="16,8"/>
+    </Style>
+    
+    <Style Selector="TextBlock.labelText">
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- PANELES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.panelContenido">
+        <Setter Property="Background" Value="White"/>
+        <Setter Property="CornerRadius" Value="20"/>
+        <Setter Property="Padding" Value="30"/>
+        <Setter Property="BoxShadow" Value="0 4 20 0 #40000000"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- ICONOS CIRCULARES -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.iconoCircular">
+        <Setter Property="Width" Value="50"/>
+        <Setter Property="Height" Value="50"/>
+        <Setter Property="CornerRadius" Value="25"/>
+        <Setter Property="Background" Value="#ffd966"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+    
+    <Style Selector="Border.iconoCircular:pointerover">
+        <Setter Property="Background" Value="#ffd966"/>
+        <Setter Property="BorderBrush" Value="#0b5394"/>
+    </Style>
+    
+    <!-- Iconos grandes (productos) -->
+    <Style Selector="Border.iconoProducto">
+        <Setter Property="Width" Value="80"/>
+        <Setter Property="Height" Value="80"/>
+        <Setter Property="CornerRadius" Value="40"/>
+        <Setter Property="Background" Value="#ffd966"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TARJETAS DE PRODUCTOS -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.tarjetaProducto">
+        <Setter Property="Background" Value="#f3f3f3"/>
+        <Setter Property="CornerRadius" Value="15"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BoxShadow" Value="0 2 8 0 #30000000"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="3"/>
+    </Style>
+    
+    <Style Selector="Border.tarjetaProducto:pointerover">
+        <Setter Property="Background" Value="#ffffff"/>
+        <Setter Property="BorderBrush" Value="#ffd966"/>
+        <Setter Property="BoxShadow" Value="0 4 12 0 #40000000"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- TIPOGRAFÍA -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="TextBlock.tituloSeccion">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+    </Style>
+    
+    <Style Selector="TextBlock.nombreProducto">
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="16"/>
+    </Style>
+    
+    <Style Selector="TextBlock.precio">
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="Foreground" Value="#0b5394"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="20"/>
+    </Style>
+    
+    <Style Selector="TextBlock.etiquetaColor">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="FontWeight" Value="Bold"/>
+    </Style>
+    
+    <Style Selector="TextBlock.nombreColor">
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="12"/>
+    </Style>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- LOGO -->
+    <!-- ═══════════════════════════════════════════ -->
+    
+    <Style Selector="Border.logoContainer">
+        <Setter Property="BorderBrush" Value="#ffd966"/>
+        <Setter Property="BorderThickness" Value="3"/>
+        <Setter Property="CornerRadius" Value="15"/>
+        <Setter Property="Padding" Value="15,8"/>
+        <Setter Property="Background" Value="White"/>
+    </Style>
+    
+</Styles>

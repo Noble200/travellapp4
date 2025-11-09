@@ -1,0 +1,74 @@
+is_global = true
+build_property.AvaloniaNameGeneratorIsEnabled = true
+build_property.AvaloniaNameGeneratorBehavior = InitializeComponent
+build_property.AvaloniaNameGeneratorDefaultFieldModifier = internal
+build_property.AvaloniaNameGeneratorFilterByPath = *
+build_property.AvaloniaNameGeneratorFilterByNamespace = *
+build_property.AvaloniaNameGeneratorViewFileNamingStrategy = NamespaceAndClassName
+build_property.AvaloniaNameGeneratorAttachDevTools = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = Allva.Desktop
+build_property.ProjectDir = C:\Users\Ruso\Desktop\AllvaSystem - copia - copia - copia\src\Allva.Desktop\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/App.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Styles/AllvaStyles.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/Admin/AdminDashboardView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/Admin/AdminDashboardView.Styles.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/Admin/Manageadministradoresallvaview.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/Admin/ManageComerciosView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/Admin/ManageUsersView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/CurrencyExchangeView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/FlightTicketsView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/FoodPacksView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/LatestNewsView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/LoginView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/LoginView.Styles.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/Maindashboardview.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/MainWindow.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/TestPanelView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/TestPanelView.Styles.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[C:/Users/Ruso/Desktop/AllvaSystem - copia - copia - copia/src/Allva.Desktop/Views/TravelPacksView.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml

@@ -1,0 +1,198 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Allva.Desktop.Views.FlightTicketsView"
+             xmlns:vm="using:Allva.Desktop.ViewModels"
+             Background="#FFF8E8">
+
+    <Design.DataContext>
+        <vm:FlightTicketsViewModel/>
+    </Design.DataContext>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- ========== HEADER ========== -->
+        <Border Grid.Row="0" Background="#FFC600" Padding="30,20" BoxShadow="0 2 10 0 #40000000">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Background="White" CornerRadius="10" Padding="25,12" BorderBrush="#FFC600" BorderThickness="3">
+                    <TextBlock Text="Allva" FontSize="32" FontWeight="Bold" FontStyle="Italic" Foreground="#003566"/>
+                </Border>
+
+                <TextBlock Grid.Column="1" Text="Billetes de Avión" FontSize="28" FontWeight="SemiBold" 
+                           Foreground="#003566" VerticalAlignment="Center" Margin="40,0,0,0"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="15">
+                    <Border Background="White" CornerRadius="25" Width="50" Height="50" BoxShadow="0 2 8 0 #30000000">
+                        <TextBlock Text="🔔" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <Border Background="White" CornerRadius="25" Width="50" Height="50" BoxShadow="0 2 8 0 #30000000">
+                        <TextBlock Text="👤" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ========== CONTENIDO ========== -->
+        <ScrollViewer Grid.Row="1" Padding="40">
+            <StackPanel Spacing="30">
+
+                <!-- Buscador de vuelos -->
+                <Border Background="White" CornerRadius="15" BoxShadow="0 4 15 0 #30000000" Padding="40">
+                    <StackPanel Spacing="25">
+                        <TextBlock Text="Buscar Vuelos" FontSize="24" FontWeight="Bold" Foreground="#003566"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Origen -->
+                            <StackPanel Grid.Column="0" Spacing="10">
+                                <TextBlock Text="Origen" FontWeight="SemiBold" Foreground="#003566"/>
+                                <TextBox Height="45" FontSize="16" Watermark="Ciudad de origen"/>
+                            </StackPanel>
+
+                            <!-- Destino -->
+                            <StackPanel Grid.Column="2" Spacing="10">
+                                <TextBlock Text="Destino" FontWeight="SemiBold" Foreground="#003566"/>
+                                <TextBox Height="45" FontSize="16" Watermark="Ciudad de destino"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="20"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Spacing="10">
+                                <TextBlock Text="Fecha de salida" FontWeight="SemiBold" Foreground="#003566"/>
+                                <DatePicker Height="45"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Spacing="10">
+                                <TextBlock Text="Fecha de retorno" FontWeight="SemiBold" Foreground="#003566"/>
+                                <DatePicker Height="45"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4" Spacing="10">
+                                <TextBlock Text="Pasajeros" FontWeight="SemiBold" Foreground="#003566"/>
+                                <NumericUpDown Height="45" Minimum="1" Maximum="9" Value="1"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <Button Content="BUSCAR VUELOS" Background="#003566" Foreground="White" 
+                                Height="50" FontSize="16" FontWeight="Bold" CornerRadius="8" 
+                                HorizontalAlignment="Center" Width="300"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Vuelos disponibles -->
+                <TextBlock Text="Vuelos Disponibles" FontSize="24" FontWeight="Bold" Foreground="#003566"/>
+
+                <!-- Vuelo 1 -->
+                <Border Background="White" CornerRadius="15" BoxShadow="0 4 15 0 #30000000" Padding="30">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="10">
+                            <TextBlock Text="Madrid (MAD) → París (CDG)" FontSize="20" FontWeight="Bold" Foreground="#003566"/>
+                            <TextBlock Text="Salida: 15 días" FontSize="14" Foreground="#666"/>
+                            <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Clase Económica" FontSize="12" Foreground="#666"/>
+                                    <TextBlock Text="120.00 €" FontSize="20" FontWeight="Bold" Foreground="#FFC600"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Clase Business" FontSize="12" Foreground="#666"/>
+                                    <TextBlock Text="450.00 €" FontSize="20" FontWeight="Bold" Foreground="#FFC600"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Content="RESERVAR" Background="#003566" Foreground="White" 
+                                Height="45" Width="150" FontSize="14" FontWeight="Bold" CornerRadius="8" 
+                                VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Vuelo 2 -->
+                <Border Background="White" CornerRadius="15" BoxShadow="0 4 15 0 #30000000" Padding="30">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="10">
+                            <TextBlock Text="Barcelona (BCN) → Roma (FCO)" FontSize="20" FontWeight="Bold" Foreground="#003566"/>
+                            <TextBlock Text="Salida: 20 días" FontSize="14" Foreground="#666"/>
+                            <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Clase Económica" FontSize="12" Foreground="#666"/>
+                                    <TextBlock Text="95.00 €" FontSize="20" FontWeight="Bold" Foreground="#FFC600"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Clase Business" FontSize="12" Foreground="#666"/>
+                                    <TextBlock Text="380.00 €" FontSize="20" FontWeight="Bold" Foreground="#FFC600"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Content="RESERVAR" Background="#003566" Foreground="White" 
+                                Height="45" Width="150" FontSize="14" FontWeight="Bold" CornerRadius="8" 
+                                VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Vuelo 3 -->
+                <Border Background="White" CornerRadius="15" BoxShadow="0 4 15 0 #30000000" Padding="30">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="10">
+                            <TextBlock Text="Madrid (MAD) → Londres (LHR)" FontSize="20" FontWeight="Bold" Foreground="#003566"/>
+                            <TextBlock Text="Salida: 10 días" FontSize="14" Foreground="#666"/>
+                            <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Clase Económica" FontSize="12" Foreground="#666"/>
+                                    <TextBlock Text="85.00 €" FontSize="20" FontWeight="Bold" Foreground="#FFC600"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="Clase Business" FontSize="12" Foreground="#666"/>
+                                    <TextBlock Text="320.00 €" FontSize="20" FontWeight="Bold" Foreground="#FFC600"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" Content="RESERVAR" Background="#003566" Foreground="White" 
+                                Height="45" Width="150" FontSize="14" FontWeight="Bold" CornerRadius="8" 
+                                VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</UserControl>
