@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Allva.Desktop.Models.Admin;
 
@@ -112,27 +113,11 @@ public class ComercioModel
     /// Color del badge de estado para UI
     /// </summary>
     public string EstadoColor => Activo ? "#28a745" : "#dc3545";
-    
-    // ============================================
-    // PROPIEDADES CALCULADAS PARA BOTONES
-    // ✅ NUEVAS PROPIEDADES AGREGADAS
-    // ============================================
-    
-    /// <summary>
-    /// Texto del botón de cambiar estado (Desactivar/Activar)
-    /// </summary>
-    public string EstadoBotonTexto => Activo ? "Desactivar" : "Activar";
-    
-    /// <summary>
-    /// Color del botón de cambiar estado
-    /// Rojo cuando está activo (para desactivar), Verde cuando está inactivo (para activar)
-    /// </summary>
-    public string EstadoBotonColor => Activo ? "#dc3545" : "#28a745";
 }
 
 /// <summary>
 /// Modelo simplificado de Local para mostrar en la lista de comercios
-/// ACTUALIZADO: Con todos los campos de la base de datos + permisos individuales
+/// ACTUALIZADO: Con todos los campos de la base de datos + permisos individuales + lista de usuarios
 /// </summary>
 public class LocalSimpleModel
 {
@@ -155,7 +140,6 @@ public class LocalSimpleModel
     
     public string? Telefono { get; set; }
     public string? Email { get; set; }
-    public int NumeroUsuariosMax { get; set; } = 10;
     public string? Observaciones { get; set; }
     
     // ============================================
@@ -164,6 +148,21 @@ public class LocalSimpleModel
     
     public bool Activo { get; set; } = true;
     public int NumeroUsuarios { get; set; } = 0;
+    
+    /// <summary>
+    /// ✅ NUEVO: Lista de usuarios asignados a este local
+    /// </summary>
+    public List<UserSimpleModel> Usuarios { get; set; } = new List<UserSimpleModel>();
+    
+    /// <summary>
+    /// ✅ NUEVO: Cantidad de usuarios fijos en este local
+    /// </summary>
+    public int CantidadUsuariosFijos => Usuarios?.Count(u => !u.EsFlooter) ?? 0;
+    
+    /// <summary>
+    /// ✅ NUEVO: Cantidad de usuarios flooter asignados a este local
+    /// </summary>
+    public int CantidadUsuariosFlooter => Usuarios?.Count(u => u.EsFlooter) ?? 0;
     
     // ============================================
     // PERMISOS DE MÓDULOS POR LOCAL
@@ -238,4 +237,24 @@ public class LocalSimpleModel
                 : "Sin módulos activos";
         }
     }
+}
+
+/// <summary>
+/// ✅ NUEVA CLASE: Modelo simplificado de Usuario para mostrar en los locales
+/// </summary>
+public class UserSimpleModel
+{
+    public int IdUsuario { get; set; }
+    public string NumeroUsuario { get; set; } = string.Empty;
+    public string NombreCompleto { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// ✅ CAMBIO: Flotante → Flooter
+    /// </summary>
+    public bool EsFlooter { get; set; } = false;
+    
+    /// <summary>
+    /// Texto para mostrar si es flooter
+    /// </summary>
+    public string TipoUsuarioTexto => EsFlooter ? "Flooter" : "Fijo";
 }

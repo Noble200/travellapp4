@@ -17,10 +17,10 @@ namespace Allva.Desktop.ViewModels.Admin;
 
 /// <summary>
 /// ViewModel para la gestión de comercios en el panel de administración
-/// VERSIÓN MEJORADA CON:
-/// - Filtro por módulos
-/// - Sistema de códigos de local automático
-/// - Comandos mejorados
+/// VERSIÓN CORREGIDA CON:
+/// - "Flotante" → "Flooter" en todo el código
+/// - Botón Activar/Desactivar para LOCALES (no comercios)
+/// - Carga de usuarios por local implementada
 /// </summary>
 public partial class ManageComerciosViewModel : ObservableObject
 {
@@ -123,7 +123,7 @@ public partial class ManageComerciosViewModel : ObservableObject
     [ObservableProperty]
     private string _filtroEstado = "Todos";
     
-    // NUEVO: Filtro por módulo
+    // Filtro por módulo
     [ObservableProperty]
     private string _filtroModulo = "Todos";
 
@@ -194,6 +194,13 @@ public partial class ManageComerciosViewModel : ObservableObject
             foreach (var comercio in comercios)
             {
                 comercio.Locales = await CargarLocalesDelComercio(connection, comercio.IdComercio);
+                
+                // ✅ NUEVO: Cargar usuarios para cada local
+                foreach (var local in comercio.Locales)
+                {
+                    local.Usuarios = await CargarUsuariosDelLocal(connection, local.IdLocal);
+                }
+                
                 comercio.TotalUsuarios = await ContarUsuariosDelComercio(connection, comercio.IdComercio);
                 Comercios.Add(comercio);
             }
@@ -260,8 +267,7 @@ public partial class ManageComerciosViewModel : ObservableObject
         
         var query = @"SELECT id_local, codigo_local, nombre_local, direccion, local_numero,
                              escalera, piso, telefono, email, observaciones,
-                             numero_usuarios_max, activo,
-                             modulo_divisas, modulo_pack_alimentos, 
+                             activo, modulo_divisas, modulo_pack_alimentos, 
                              modulo_billetes_avion, modulo_pack_viajes
                       FROM locales 
                       WHERE id_comercio = @IdComercio
@@ -286,16 +292,50 @@ public partial class ManageComerciosViewModel : ObservableObject
                 Telefono = reader.IsDBNull(7) ? null : reader.GetString(7),
                 Email = reader.IsDBNull(8) ? null : reader.GetString(8),
                 Observaciones = reader.IsDBNull(9) ? null : reader.GetString(9),
-                NumeroUsuariosMax = reader.GetInt32(10),
-                Activo = reader.GetBoolean(11),
-                ModuloDivisas = reader.GetBoolean(12),
-                ModuloPackAlimentos = reader.GetBoolean(13),
-                ModuloBilletesAvion = reader.GetBoolean(14),
-                ModuloPackViajes = reader.GetBoolean(15)
+                Activo = reader.GetBoolean(10),
+                ModuloDivisas = reader.GetBoolean(11),
+                ModuloPackAlimentos = reader.GetBoolean(12),
+                ModuloBilletesAvion = reader.GetBoolean(13),
+                ModuloPackViajes = reader.GetBoolean(14),
+                Usuarios = new List<UserSimpleModel>() // Inicializar lista vacía
             });
         }
         
         return locales;
+    }
+
+    /// <summary>
+    /// ✅ NUEVO MÉTODO: Cargar usuarios de un local específico
+    /// </summary>
+    private async Task<List<UserSimpleModel>> CargarUsuariosDelLocal(NpgsqlConnection connection, int idLocal)
+    {
+        var usuarios = new List<UserSimpleModel>();
+        
+        var query = @"SELECT u.id_usuario, u.numero_usuario, u.nombre, u.apellidos, u.es_flooter
+                      FROM usuarios u
+                      WHERE u.id_local = @IdLocal OR (u.es_flooter = true AND EXISTS (
+                          SELECT 1 FROM usuario_locales_flooter ul 
+                          WHERE ul.id_usuario = u.id_usuario AND ul.id_local = @IdLocal
+                      ))
+                      ORDER BY u.nombre, u.apellidos";
+        
+        using var cmd = new NpgsqlCommand(query, connection);
+        cmd.Parameters.AddWithValue("@IdLocal", idLocal);
+        
+        using var reader = await cmd.ExecuteReaderAsync();
+        
+        while (await reader.ReadAsync())
+        {
+            usuarios.Add(new UserSimpleModel
+            {
+                IdUsuario = reader.GetInt32(0),
+                NumeroUsuario = reader.GetString(1),
+                NombreCompleto = $"{reader.GetString(2)} {reader.GetString(3)}",
+                EsFlooter = reader.GetBoolean(4)
+            });
+        }
+        
+        return usuarios;
     }
 
     private async Task<int> ContarUsuariosDelComercio(NpgsqlConnection connection, int idComercio)
@@ -345,10 +385,11 @@ public partial class ManageComerciosViewModel : ObservableObject
     private async Task VerDetallesComercio(ComercioModel comercio)
     {
         ComercioSeleccionado = comercio;
-        TituloPanelDerecho = $"Detalles de {comercio.NombreComercio}";
+        TituloPanelDerecho = $"Detalles: {comercio.NombreComercio}";
         MostrarFormulario = false;
         MostrarPanelDerecho = true;
         
+        // Cargar archivos del comercio seleccionado
         await CargarArchivosComercio(comercio.IdComercio);
     }
 
@@ -359,7 +400,14 @@ public partial class ManageComerciosViewModel : ObservableObject
         MostrarFormulario = false;
         ContenidoPanelDerecho = null;
         ComercioSeleccionado = null;
+        ArchivosComercioSeleccionado.Clear();
         LimpiarFormulario();
+    }
+
+    [RelayCommand]
+    private void CancelarFormulario()
+    {
+        CerrarPanelDerecho();
     }
 
     // ============================================
@@ -458,14 +506,14 @@ public partial class ManageComerciosViewModel : ObservableObject
                 var queryLocal = @"
                     INSERT INTO locales (
                         id_comercio, codigo_local, nombre_local, direccion, local_numero,
-                        escalera, piso, telefono, email, numero_usuarios_max, observaciones,
+                        escalera, piso, telefono, email, observaciones,
                         activo, modulo_divisas, modulo_pack_alimentos, 
                         modulo_billetes_avion, modulo_pack_viajes,
                         pais, codigo_postal, tipo_via, comision_divisas
                     )
                     VALUES (
                         @IdComercio, @CodigoLocal, @NombreLocal, @Direccion, @LocalNumero,
-                        @Escalera, @Piso, @Telefono, @Email, @NumeroUsuariosMax, @Observaciones,
+                        @Escalera, @Piso, @Telefono, @Email, @Observaciones,
                         @Activo, @ModuloDivisas, @ModuloPackAlimentos,
                         @ModuloBilletesAvion, @ModuloPackViajes,
                         @Pais, @CodigoPostal, @TipoVia, @ComisionDivisas
@@ -485,7 +533,6 @@ public partial class ManageComerciosViewModel : ObservableObject
                     string.IsNullOrWhiteSpace(local.Telefono) ? DBNull.Value : local.Telefono);
                 cmdLocal.Parameters.AddWithValue("@Email", 
                     string.IsNullOrWhiteSpace(local.Email) ? DBNull.Value : local.Email);
-                cmdLocal.Parameters.AddWithValue("@NumeroUsuariosMax", local.NumeroUsuariosMax);
                 cmdLocal.Parameters.AddWithValue("@Observaciones", 
                     string.IsNullOrWhiteSpace(local.Observaciones) ? DBNull.Value : local.Observaciones);
                 cmdLocal.Parameters.AddWithValue("@Activo", local.Activo);
@@ -585,14 +632,14 @@ public partial class ManageComerciosViewModel : ObservableObject
                 var queryUpsert = @"
                     INSERT INTO locales (
                         id_comercio, codigo_local, nombre_local, direccion, local_numero,
-                        escalera, piso, telefono, email, numero_usuarios_max, observaciones,
+                        escalera, piso, telefono, email, observaciones,
                         activo, modulo_divisas, modulo_pack_alimentos, 
                         modulo_billetes_avion, modulo_pack_viajes,
                         pais, codigo_postal, tipo_via, comision_divisas
                     )
                     VALUES (
                         @IdComercio, @CodigoLocal, @NombreLocal, @Direccion, @LocalNumero,
-                        @Escalera, @Piso, @Telefono, @Email, @NumeroUsuariosMax, @Observaciones,
+                        @Escalera, @Piso, @Telefono, @Email, @Observaciones,
                         @Activo, @ModuloDivisas, @ModuloPackAlimentos,
                         @ModuloBilletesAvion, @ModuloPackViajes,
                         @Pais, @CodigoPostal, @TipoVia, @ComisionDivisas
@@ -606,7 +653,6 @@ public partial class ManageComerciosViewModel : ObservableObject
                         piso = EXCLUDED.piso,
                         telefono = EXCLUDED.telefono,
                         email = EXCLUDED.email,
-                        numero_usuarios_max = EXCLUDED.numero_usuarios_max,
                         observaciones = EXCLUDED.observaciones,
                         activo = EXCLUDED.activo,
                         modulo_divisas = EXCLUDED.modulo_divisas,
@@ -632,7 +678,6 @@ public partial class ManageComerciosViewModel : ObservableObject
                     string.IsNullOrWhiteSpace(local.Telefono) ? DBNull.Value : local.Telefono);
                 cmdLocal.Parameters.AddWithValue("@Email", 
                     string.IsNullOrWhiteSpace(local.Email) ? DBNull.Value : local.Email);
-                cmdLocal.Parameters.AddWithValue("@NumeroUsuariosMax", local.NumeroUsuariosMax);
                 cmdLocal.Parameters.AddWithValue("@Observaciones", 
                     string.IsNullOrWhiteSpace(local.Observaciones) ? DBNull.Value : local.Observaciones);
                 cmdLocal.Parameters.AddWithValue("@Activo", local.Activo);
@@ -711,29 +756,39 @@ public partial class ManageComerciosViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// ✅ CORREGIDO: Este comando ahora es para LOCALES, no comercios
+    /// </summary>
     [RelayCommand]
-    private async Task CambiarEstadoComercio(ComercioModel comercio)
+    private async Task CambiarEstadoLocal(LocalFormModel local)
     {
         try
         {
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            var nuevoEstado = !comercio.Activo;
-            var query = "UPDATE comercios SET activo = @Activo WHERE id_comercio = @IdComercio";
+            var nuevoEstado = !local.Activo;
+            var query = "UPDATE locales SET activo = @Activo WHERE codigo_local = @CodigoLocal";
             
             using var cmd = new NpgsqlCommand(query, connection);
             cmd.Parameters.AddWithValue("@Activo", nuevoEstado);
-            cmd.Parameters.AddWithValue("@IdComercio", comercio.IdComercio);
+            cmd.Parameters.AddWithValue("@CodigoLocal", local.CodigoLocal);
             
             await cmd.ExecuteNonQueryAsync();
 
-            comercio.Activo = nuevoEstado;
+            local.Activo = nuevoEstado;
+            
+            // ✅ NUEVO: Actualizar también en la vista de detalles si existe
+            if (ComercioSeleccionado != null)
+            {
+                var localEnDetalle = ComercioSeleccionado.Locales.FirstOrDefault(l => l.CodigoLocal == local.CodigoLocal);
+                if (localEnDetalle != null)
+                {
+                    localEnDetalle.Activo = nuevoEstado;
+                }
+            }
 
-            OnPropertyChanged(nameof(ComerciosActivos));
-            OnPropertyChanged(nameof(ComerciosInactivos));
-
-            MensajeExito = $"✓ Comercio {comercio.NombreComercio} marcado como {(nuevoEstado ? "Activo" : "Inactivo")}";
+            MensajeExito = $"✓ Local {local.NombreLocal} marcado como {(nuevoEstado ? "Activo" : "Inactivo")}";
             MostrarMensajeExito = true;
             await Task.Delay(2000);
             MostrarMensajeExito = false;
@@ -766,7 +821,7 @@ public partial class ManageComerciosViewModel : ObservableObject
             );
         }
         
-        // NUEVO: Filtro por módulo
+        // Filtro por módulo
         if (!string.IsNullOrEmpty(FiltroModulo) && FiltroModulo != "Todos")
         {
             filtrados = filtrados.Where(c => c.Locales.Any(l => 
@@ -791,7 +846,6 @@ public partial class ManageComerciosViewModel : ObservableObject
         }
     }
 
-    // NUEVO: Comando Limpiar Filtros
     [RelayCommand]
     private void LimpiarFiltros()
     {
@@ -819,7 +873,6 @@ public partial class ManageComerciosViewModel : ObservableObject
             NombreLocal = $"Local {LocalesComercio.Count + 1}",
             Direccion = string.Empty,
             LocalNumero = string.Empty,
-            NumeroUsuariosMax = 10,
             Activo = true,
             Pais = string.Empty,
             CodigoPostal = string.Empty,
@@ -833,20 +886,11 @@ public partial class ManageComerciosViewModel : ObservableObject
         LocalesComercio.Add(nuevoLocal);
     }
 
-    // NUEVO: Comando QuitarLocal
     [RelayCommand]
     private void QuitarLocal(LocalFormModel local)
     {
         if (local == null) return;
         LocalesComercio.Remove(local);
-    }
-
-    // NUEVO: Comando CambiarEstadoLocal
-    [RelayCommand]
-    private void CambiarEstadoLocal(LocalFormModel local)
-    {
-        if (local == null) return;
-        local.Activo = !local.Activo;
     }
 
     // ============================================
@@ -958,7 +1002,7 @@ public partial class ManageComerciosViewModel : ObservableObject
     }
 
     // ============================================
-    // SISTEMA DE CÓDIGOS DE LOCAL (NUEVO)
+    // SISTEMA DE CÓDIGOS DE LOCAL
     // ============================================
 
     private async Task InicializarTablaCorrelativos()
@@ -1140,7 +1184,6 @@ public partial class ManageComerciosViewModel : ObservableObject
                 Piso = local.Piso,
                 Telefono = local.Telefono,
                 Email = local.Email,
-                NumeroUsuariosMax = local.NumeroUsuariosMax,
                 Observaciones = local.Observaciones,
                 Activo = local.Activo,
                 ModuloDivisas = local.ModuloDivisas,
