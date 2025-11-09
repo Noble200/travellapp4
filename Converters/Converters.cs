@@ -127,27 +127,6 @@ public class InverseBoolConverter : IValueConverter
 }
 
 /// <summary>
-/// Convierte bool a visibilidad
-/// true = visible, false = collapsed
-/// </summary>
-public class BoolToVisibilityConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is bool boolValue)
-        {
-            return boolValue;
-        }
-        return false;
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-/// <summary>
 /// Convierte null a true (para IsVisible)
 /// null → true, no-null → false
 /// </summary>
@@ -204,27 +183,6 @@ public class BoolToExpandIconConverter : IValueConverter
 }
 
 /// <summary>
-/// Convierte bool a icono genérico
-/// true = ✓, false = ✗
-/// </summary>
-public class BoolToIconConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is bool boolValue)
-        {
-            return boolValue ? "✓" : "✗";
-        }
-        return "?";
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-/// <summary>
 /// Convierte un string nullable a string vacío si es null
 /// Útil para mostrar valores opcionales sin mostrar "null"
 /// </summary>
@@ -233,27 +191,6 @@ public class NullToEmptyConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         return value?.ToString() ?? string.Empty;
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        throw new NotImplementedException();
-    }
-}
-
-/// <summary>
-/// Convierte el modo de creación a texto del botón
-/// true = "CREAR COMERCIO", false = "GUARDAR CAMBIOS"
-/// </summary>
-public class BoolToFormTitleConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is bool esModoCreacion)
-        {
-            return esModoCreacion ? "CREAR COMERCIO" : "GUARDAR CAMBIOS";
-        }
-        return "GUARDAR";
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

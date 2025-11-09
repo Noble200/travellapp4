@@ -118,7 +118,7 @@ public class ComercioModel
 
 /// <summary>
 /// Modelo simplificado de Local para mostrar en la lista de comercios
-/// ACTUALIZADO: Con todos los campos de la base de datos + permisos individuales + lista de usuarios
+/// VERSIÓN CORREGIDA: Con Pais, CodigoPostal y TipoVia agregados
 /// Ahora hereda de ObservableObject para notificar cambios de propiedades
 /// </summary>
 public partial class LocalSimpleModel : ObservableObject
@@ -126,6 +126,25 @@ public partial class LocalSimpleModel : ObservableObject
     public int IdLocal { get; set; }
     public string CodigoLocal { get; set; } = string.Empty;
     public string NombreLocal { get; set; } = string.Empty;
+    
+    // ============================================
+    // UBICACIÓN GEOGRÁFICA - CAMPOS AGREGADOS
+    // ============================================
+    
+    /// <summary>
+    /// País donde se ubica el local
+    /// </summary>
+    public string Pais { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Código postal del local
+    /// </summary>
+    public string CodigoPostal { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Tipo de vía (Calle, Avenida, Pasaje, etc)
+    /// </summary>
+    public string TipoVia { get; set; } = string.Empty;
     
     // ============================================
     // DIRECCIÓN COMPLETA (SEGÚN BASE DE DATOS)
@@ -154,23 +173,23 @@ public partial class LocalSimpleModel : ObservableObject
     public int NumeroUsuarios { get; set; } = 0;
     
     /// <summary>
-    /// ✅ NUEVO: Controla si se muestran los detalles expandidos del local
+    /// Controla si se muestran los detalles expandidos del local
     /// </summary>
     [ObservableProperty]
     private bool _mostrarDetalles = false;
     
     /// <summary>
-    /// ✅ NUEVO: Lista de usuarios asignados a este local
+    /// Lista de usuarios asignados a este local
     /// </summary>
     public List<UserSimpleModel> Usuarios { get; set; } = new List<UserSimpleModel>();
     
     /// <summary>
-    /// ✅ NUEVO: Cantidad de usuarios fijos en este local
+    /// Cantidad de usuarios fijos en este local
     /// </summary>
     public int CantidadUsuariosFijos => Usuarios?.Count(u => !u.EsFlooter) ?? 0;
     
     /// <summary>
-    /// ✅ NUEVO: Cantidad de usuarios flooter asignados a este local
+    /// Cantidad de usuarios flooter asignados a este local
     /// </summary>
     public int CantidadUsuariosFlooter => Usuarios?.Count(u => u.EsFlooter) ?? 0;
     
@@ -211,6 +230,9 @@ public partial class LocalSimpleModel : ObservableObject
         {
             var partes = new List<string>();
             
+            if (!string.IsNullOrWhiteSpace(TipoVia))
+                partes.Add(TipoVia);
+            
             if (!string.IsNullOrWhiteSpace(Direccion))
                 partes.Add(Direccion);
             
@@ -250,7 +272,7 @@ public partial class LocalSimpleModel : ObservableObject
 }
 
 /// <summary>
-/// ✅ NUEVA CLASE: Modelo simplificado de Usuario para mostrar en los locales
+/// Modelo simplificado de Usuario para mostrar en los locales
 /// </summary>
 public class UserSimpleModel
 {
@@ -259,7 +281,7 @@ public class UserSimpleModel
     public string NombreCompleto { get; set; } = string.Empty;
     
     /// <summary>
-    /// ✅ CAMBIO: Flotante → Flooter
+    /// CAMBIO: Flotante → Flooter
     /// </summary>
     public bool EsFlooter { get; set; } = false;
     

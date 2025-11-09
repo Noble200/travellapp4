@@ -22,6 +22,8 @@ namespace Allva.Desktop.ViewModels.Admin;
 /// - Botón Activar/Desactivar para LOCALES (no comercios)
 /// - Carga de usuarios por local implementada
 /// - Corrección de NullReferenceException al ver detalles
+/// - Campos obligatorios: Pais, CodigoPostal, TipoVia, Direccion, LocalNumero
+/// - Eliminado ComisionDivisas de locales
 /// </summary>
 public partial class ManageComerciosViewModel : ObservableObject
 {
@@ -266,8 +268,11 @@ public partial class ManageComerciosViewModel : ObservableObject
     {
         var locales = new List<LocalSimpleModel>();
         
-        var query = @"SELECT id_local, codigo_local, nombre_local, direccion, local_numero,
-                             escalera, piso, telefono, email, observaciones,
+        // ✅ QUERY CORREGIDO: Incluye pais, codigo_postal, tipo_via
+        var query = @"SELECT id_local, codigo_local, nombre_local,
+                             pais, codigo_postal, tipo_via,
+                             direccion, local_numero, escalera, piso, 
+                             telefono, email, observaciones,
                              activo, modulo_divisas, modulo_pack_alimentos, 
                              modulo_billetes_avion, modulo_pack_viajes
                       FROM locales 
@@ -286,18 +291,25 @@ public partial class ManageComerciosViewModel : ObservableObject
                 IdLocal = reader.GetInt32(0),
                 CodigoLocal = reader.GetString(1),
                 NombreLocal = reader.GetString(2),
-                Direccion = reader.GetString(3),
-                LocalNumero = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                Escalera = reader.IsDBNull(5) ? null : reader.GetString(5),
-                Piso = reader.IsDBNull(6) ? null : reader.GetString(6),
-                Telefono = reader.IsDBNull(7) ? null : reader.GetString(7),
-                Email = reader.IsDBNull(8) ? null : reader.GetString(8),
-                Observaciones = reader.IsDBNull(9) ? null : reader.GetString(9),
-                Activo = reader.GetBoolean(10),
-                ModuloDivisas = reader.GetBoolean(11),
-                ModuloPackAlimentos = reader.GetBoolean(12),
-                ModuloBilletesAvion = reader.GetBoolean(13),
-                ModuloPackViajes = reader.GetBoolean(14),
+                
+                // ✅ NUEVOS CAMPOS (índices 3, 4, 5):
+                Pais = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                CodigoPostal = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                TipoVia = reader.IsDBNull(5) ? string.Empty : reader.GetString(5),
+                
+                // Resto de campos (índices actualizados):
+                Direccion = reader.GetString(6),
+                LocalNumero = reader.IsDBNull(7) ? string.Empty : reader.GetString(7),
+                Escalera = reader.IsDBNull(8) ? null : reader.GetString(8),
+                Piso = reader.IsDBNull(9) ? null : reader.GetString(9),
+                Telefono = reader.IsDBNull(10) ? null : reader.GetString(10),
+                Email = reader.IsDBNull(11) ? null : reader.GetString(11),
+                Observaciones = reader.IsDBNull(12) ? null : reader.GetString(12),
+                Activo = reader.GetBoolean(13),
+                ModuloDivisas = reader.GetBoolean(14),
+                ModuloPackAlimentos = reader.GetBoolean(15),
+                ModuloBilletesAvion = reader.GetBoolean(16),
+                ModuloPackViajes = reader.GetBoolean(17),
                 Usuarios = new List<UserSimpleModel>() // ✅ Inicializar lista vacía
             });
         }
@@ -370,7 +382,7 @@ public partial class ManageComerciosViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void EditarComercio(ComercioModel comercio)
+    private async Task EditarComercio(ComercioModel comercio)
     {
         ComercioSeleccionado = comercio;
         CargarDatosEnFormulario(comercio);
@@ -380,6 +392,8 @@ public partial class ManageComerciosViewModel : ObservableObject
         TituloPanelDerecho = $"Editar: {comercio.NombreComercio}";
         MostrarFormulario = true;
         MostrarPanelDerecho = true;
+
+        await CargarArchivosComercio(comercio.IdComercio);
     }
 
     [RelayCommand]
@@ -541,14 +555,14 @@ public partial class ManageComerciosViewModel : ObservableObject
                         escalera, piso, telefono, email, observaciones, numero_usuarios_max,
                         activo, modulo_divisas, modulo_pack_alimentos, 
                         modulo_billetes_avion, modulo_pack_viajes,
-                        pais, codigo_postal, tipo_via, comision_divisas
+                        pais, codigo_postal, tipo_via
                     )
                     VALUES (
                         @IdComercio, @CodigoLocal, @NombreLocal, @Direccion, @LocalNumero,
                         @Escalera, @Piso, @Telefono, @Email, @Observaciones, @NumeroUsuariosMax,
                         @Activo, @ModuloDivisas, @ModuloPackAlimentos,
                         @ModuloBilletesAvion, @ModuloPackViajes,
-                        @Pais, @CodigoPostal, @TipoVia, @ComisionDivisas
+                        @Pais, @CodigoPostal, @TipoVia
                     )";
                 
                 using var cmdLocal = new NpgsqlCommand(queryLocal, connection, transaction);
@@ -576,7 +590,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                 cmdLocal.Parameters.AddWithValue("@Pais", local.Pais ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@CodigoPostal", local.CodigoPostal ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@TipoVia", local.TipoVia ?? string.Empty);
-                cmdLocal.Parameters.AddWithValue("@ComisionDivisas", local.ComisionDivisas);
+                // ❌ SIN ComisionDivisas
                 
                 await cmdLocal.ExecuteNonQueryAsync();
             }
@@ -668,14 +682,14 @@ public partial class ManageComerciosViewModel : ObservableObject
                         escalera, piso, telefono, email, observaciones, numero_usuarios_max,
                         activo, modulo_divisas, modulo_pack_alimentos, 
                         modulo_billetes_avion, modulo_pack_viajes,
-                        pais, codigo_postal, tipo_via, comision_divisas
+                        pais, codigo_postal, tipo_via
                     )
                     VALUES (
                         @IdComercio, @CodigoLocal, @NombreLocal, @Direccion, @LocalNumero,
                         @Escalera, @Piso, @Telefono, @Email, @Observaciones, @NumeroUsuariosMax,
                         @Activo, @ModuloDivisas, @ModuloPackAlimentos,
                         @ModuloBilletesAvion, @ModuloPackViajes,
-                        @Pais, @CodigoPostal, @TipoVia, @ComisionDivisas
+                        @Pais, @CodigoPostal, @TipoVia
                     )
                     ON CONFLICT (codigo_local) 
                     DO UPDATE SET
@@ -695,8 +709,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                         modulo_pack_viajes = EXCLUDED.modulo_pack_viajes,
                         pais = EXCLUDED.pais,
                         codigo_postal = EXCLUDED.codigo_postal,
-                        tipo_via = EXCLUDED.tipo_via,
-                        comision_divisas = EXCLUDED.comision_divisas";
+                        tipo_via = EXCLUDED.tipo_via";
                 
                 using var cmdLocal = new NpgsqlCommand(queryUpsert, connection, transaction);
                 cmdLocal.Parameters.AddWithValue("@IdComercio", ComercioSeleccionado.IdComercio);
@@ -723,7 +736,7 @@ public partial class ManageComerciosViewModel : ObservableObject
                 cmdLocal.Parameters.AddWithValue("@Pais", local.Pais ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@CodigoPostal", local.CodigoPostal ?? string.Empty);
                 cmdLocal.Parameters.AddWithValue("@TipoVia", local.TipoVia ?? string.Empty);
-                cmdLocal.Parameters.AddWithValue("@ComisionDivisas", local.ComisionDivisas);
+                // ❌ SIN ComisionDivisas
                 
                 await cmdLocal.ExecuteNonQueryAsync();
             }
@@ -1262,6 +1275,12 @@ public partial class ManageComerciosViewModel : ObservableObject
                 IdComercio = comercio.IdComercio,
                 CodigoLocal = local.CodigoLocal,
                 NombreLocal = local.NombreLocal,
+                
+                // ✅ CARGAR desde el local, no vacíos:
+                Pais = local.Pais ?? string.Empty,
+                CodigoPostal = local.CodigoPostal ?? string.Empty,
+                TipoVia = local.TipoVia ?? string.Empty,
+                
                 Direccion = local.Direccion,
                 LocalNumero = local.LocalNumero,
                 Escalera = local.Escalera,
@@ -1274,11 +1293,8 @@ public partial class ManageComerciosViewModel : ObservableObject
                 ModuloPackAlimentos = local.ModuloPackAlimentos,
                 ModuloBilletesAvion = local.ModuloBilletesAvion,
                 ModuloPackViajes = local.ModuloPackViajes,
-                Pais = string.Empty,
-                CodigoPostal = string.Empty,
-                TipoVia = string.Empty,
-                NumeroUsuariosMax = 10,
-                ComisionDivisas = 0
+                NumeroUsuariosMax = 10
+                // ❌ SIN ComisionDivisas
             });
         }
         
@@ -1321,9 +1337,33 @@ public partial class ManageComerciosViewModel : ObservableObject
                 return false;
             }
             
+            if (string.IsNullOrWhiteSpace(local.Pais))
+            {
+                mensajeError = $"El local '{local.NombreLocal}' debe tener un país";
+                return false;
+            }
+            
+            if (string.IsNullOrWhiteSpace(local.CodigoPostal))
+            {
+                mensajeError = $"El local '{local.NombreLocal}' debe tener código postal";
+                return false;
+            }
+            
+            if (string.IsNullOrWhiteSpace(local.TipoVia))
+            {
+                mensajeError = $"El local '{local.NombreLocal}' debe tener tipo de vía";
+                return false;
+            }
+            
             if (string.IsNullOrWhiteSpace(local.Direccion))
             {
                 mensajeError = $"El local '{local.NombreLocal}' debe tener una dirección";
+                return false;
+            }
+            
+            if (string.IsNullOrWhiteSpace(local.LocalNumero))
+            {
+                mensajeError = $"El local '{local.NombreLocal}' debe tener un número";
                 return false;
             }
         }

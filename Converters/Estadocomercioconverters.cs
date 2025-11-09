@@ -6,7 +6,7 @@ using Avalonia.Media;
 namespace Allva.Desktop.Converters;
 
 /// <summary>
-/// Convierte bool a color específico para estados de comercios/locales
+/// Convierte bool a color específico para estados de locales
 /// Verde para activo, Rojo para inactivo
 /// </summary>
 public class EstadoActivoColorConverter : IValueConverter

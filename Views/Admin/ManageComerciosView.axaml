@@ -795,14 +795,14 @@
 
                                                             <Grid ColumnDefinitions="*,*">
                                                                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                                                    <TextBlock Text="País" 
+                                                                    <TextBlock Text="País *" 
                                                                                FontSize="13" FontWeight="SemiBold" 
                                                                                Margin="0,0,0,6"/>
                                                                     <TextBox Text="{Binding Pais}" 
                                                                              Watermark="España"/>
                                                                 </StackPanel>
                                                                 <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                                                    <TextBlock Text="Código Postal" 
+                                                                    <TextBlock Text="Código Postal *" 
                                                                                FontSize="13" FontWeight="SemiBold" 
                                                                                Margin="0,0,0,6"/>
                                                                     <TextBox Text="{Binding CodigoPostal}" 
@@ -810,16 +810,36 @@
                                                                 </StackPanel>
                                                             </Grid>
 
+                                                            <!-- ✅ NUEVO: Campo Tipo de Vía -->
+                                                            <StackPanel>
+                                                                <TextBlock Text="Tipo de vía *" 
+                                                                           FontSize="13" FontWeight="SemiBold" 
+                                                                           Margin="0,0,0,6"/>
+                                                                <ComboBox SelectedItem="{Binding TipoVia}"
+                                                                          PlaceholderText="Seleccione tipo de vía...">
+                                                                    <ComboBoxItem Content="Calle"/>
+                                                                    <ComboBoxItem Content="Avenida"/>
+                                                                    <ComboBoxItem Content="Pasaje"/>
+                                                                    <ComboBoxItem Content="Plaza"/>
+                                                                    <ComboBoxItem Content="Carretera"/>
+                                                                    <ComboBoxItem Content="Camino"/>
+                                                                    <ComboBoxItem Content="Ronda"/>
+                                                                    <ComboBoxItem Content="Travesía"/>
+                                                                    <ComboBoxItem Content="Bulevar"/>
+                                                                    <ComboBoxItem Content="Glorieta"/>
+                                                                </ComboBox>
+                                                            </StackPanel>
+
                                                             <Grid ColumnDefinitions="2*,*">
                                                                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                                                    <TextBlock Text="Dirección" 
+                                                                    <TextBlock Text="Dirección *" 
                                                                                FontSize="13" FontWeight="SemiBold" 
                                                                                Margin="0,0,0,6"/>
                                                                     <TextBox Text="{Binding Direccion}" 
-                                                                             Watermark="Calle Principal"/>
+                                                                             Watermark="Gran Vía"/>
                                                                 </StackPanel>
                                                                 <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                                                    <TextBlock Text="Número" 
+                                                                    <TextBlock Text="Número *" 
                                                                                FontSize="13" FontWeight="SemiBold" 
                                                                                Margin="0,0,0,6"/>
                                                                     <TextBox Text="{Binding LocalNumero}" 

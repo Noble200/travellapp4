@@ -4,7 +4,7 @@ namespace Allva.Desktop.Models;
 
 /// <summary>
 /// Modelo auxiliar para gestionar locales en el formulario
-/// ACTUALIZADO: Con todos los campos de la base de datos + campos según Datos_Allva.txt
+/// VERSIÓN CORREGIDA: Sin campo ComisionDivisas
 /// </summary>
 public class LocalFormModel
 {
@@ -102,13 +102,8 @@ public class LocalFormModel
     public bool ModuloPackViajes { get; set; } = false;
     
     // ============================================
-    // CONFIGURACIÓN DE COMISIONES - NUEVO CAMPO
+    // ❌ ELIMINADO: ComisionDivisas (no se usa en esta versión)
     // ============================================
-    
-    /// <summary>
-    /// Porcentaje de comisión de divisas específico para este local
-    /// </summary>
-    public decimal ComisionDivisas { get; set; } = 0;
     
     // ============================================
     // PROPIEDADES CALCULADAS
