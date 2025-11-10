@@ -125,9 +125,7 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- ============================================ -->
-        <!-- HEADER CON ESTADÍSTICAS Y BOTÓN NUEVO (IGUAL AL DE COMERCIOS) -->
-        <!-- ============================================ -->
+        <!-- HEADER -->
         <Border Grid.Row="0" Background="White" 
                 BorderThickness="0,0,0,1" BorderBrush="#e0e0e0"
                 Padding="32,24">
@@ -189,24 +187,18 @@
             </Grid>
         </Border>
 
-        <!-- ============================================ -->
         <!-- CONTENIDO PRINCIPAL -->
-        <!-- ============================================ -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- ============================================ -->
             <!-- ÁREA DE FILTROS Y LISTA -->
-            <!-- ============================================ -->
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="32,28" Spacing="28">
                     
-                    <!-- ============================================ -->
-                    <!-- FILTROS DE BÚSQUEDA -->
-                    <!-- ============================================ -->
+                    <!-- FILTROS -->
                     <Border Background="White" CornerRadius="12" Padding="28" 
                             BoxShadow="0 2 8 0 #10000000">
                         <StackPanel Spacing="20">
@@ -289,16 +281,14 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- ============================================ -->
                     <!-- LISTA DE USUARIOS -->
-                    <!-- ============================================ -->
                     <ItemsControl ItemsSource="{Binding UsuariosFiltrados}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Border Classes="usuario-card">
                                     <Grid RowDefinitions="Auto,20,Auto,24,Auto">
 
-                                        <!-- Header: Nombre del usuario -->
+                                        <!-- Header -->
                                         <Grid Grid.Row="0">
                                             <StackPanel Spacing="6">
                                                 <TextBlock Text="{Binding NombreCompleto}"
@@ -310,7 +300,7 @@
                                             </StackPanel>
                                         </Grid>
 
-                                        <!-- Información del usuario (5 columnas) -->
+                                        <!-- Información del usuario -->
                                         <Grid Grid.Row="2">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
@@ -381,7 +371,6 @@
                                                 <TextBlock Text="Eliminar"/>
                                             </Button>
 
-                                            <!-- Botón de Activar/Desactivar con colores dinámicos -->
                                             <Button Background="{Binding EstadoBotonColor}"
                                                     Foreground="White"
                                                     FontWeight="Bold"
@@ -420,9 +409,7 @@
                 </StackPanel>
             </ScrollViewer>
 
-            <!-- ============================================ -->
             <!-- PANEL LATERAL DERECHO -->
-            <!-- ============================================ -->
             <Border Grid.Column="1" 
                     IsVisible="{Binding MostrarPanelDerecho}"
                     Background="White"
@@ -464,12 +451,10 @@
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <Panel>
                         
-                        <!-- ============================================ -->
                         <!-- FORMULARIO DE CREAR/EDITAR USUARIO -->
-                        <!-- ============================================ -->
                         <StackPanel IsVisible="{Binding MostrarFormulario}" Margin="32" Spacing="24">
                             
-                            <!-- Sección: Información Personal -->
+                            <!-- Información Personal -->
                             <Border Background="#f8f9fa" CornerRadius="10" Padding="24">
                                 <StackPanel Spacing="20">
                                     <TextBlock Text="Información Personal" 
@@ -499,7 +484,7 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <!-- Número de Usuario (auto-generado) -->
+                                    <!-- Número de Usuario -->
                                     <StackPanel>
                                         <TextBlock Text="Número de Usuario (generado automáticamente)" 
                                                    FontSize="15" FontWeight="SemiBold" 
@@ -533,7 +518,7 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <!-- Contraseña -->
+                                    <!-- Contraseña (MODIFICADO - SIN MODAL) -->
                                     <StackPanel>
                                         <TextBlock Text="Contraseña *" 
                                                    FontSize="15" FontWeight="SemiBold" 
@@ -546,7 +531,6 @@
 
                                             <TextBox Grid.Column="0"
                                                      Text="{Binding FormPassword}" 
-                                                     PasswordChar="●"
                                                      Watermark="Contraseña del usuario"
                                                      Margin="0,0,6,0"/>
                                             <Button Grid.Column="1"
@@ -566,7 +550,7 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Sección: Asignación de Locales -->
+                            <!-- Asignación de Locales -->
                             <Border Background="#e8f4f8" CornerRadius="10" Padding="24">
                                 <StackPanel Spacing="20">
                                     <TextBlock Text="Asignación de Locales" 
@@ -577,7 +561,7 @@
                                                FontSize="15" Foreground="#666" 
                                                TextWrapping="Wrap"/>
 
-                                    <!-- Búsqueda por nombre de comercio -->
+                                    <!-- Búsqueda -->
                                     <StackPanel>
                                         <TextBlock Text="Buscar por nombre de comercio" 
                                                    FontSize="15" FontWeight="SemiBold" 
@@ -647,7 +631,7 @@
                                         </ScrollViewer>
                                     </Border>
 
-                                    <!-- Tipo de empleado (automático) -->
+                                    <!-- Tipo de empleado -->
                                     <Border Background="White" 
                                             CornerRadius="8" 
                                             Padding="16"
@@ -738,9 +722,7 @@
 
                         </StackPanel>
 
-                        <!-- ============================================ -->
                         <!-- VER DETALLES DEL USUARIO -->
-                        <!-- ============================================ -->
                         <StackPanel IsVisible="{Binding !MostrarFormulario}" Margin="32" Spacing="28">
                             
                             <!-- Información General -->
@@ -885,7 +867,7 @@
                     </Panel>
                     </ScrollViewer>
 
-                    <!-- Footer con botones (solo formulario) -->
+                    <!-- Footer con botones -->
                     <Border Grid.Row="2" 
                             IsVisible="{Binding MostrarFormulario}"
                             Background="#f8f9fa" 
@@ -918,66 +900,7 @@
             </Border>
         </Grid>
 
-        <!-- ============================================ -->
-        <!-- MODAL DE CONTRASEÑA GENERADA -->
-        <!-- ============================================ -->
-        <Border IsVisible="{Binding MostrarModalPassword}"
-                Background="#80000000"
-                Grid.Row="0"
-                Grid.RowSpan="2">
-            <Border Background="White"
-                    CornerRadius="16"
-                    Padding="40"
-                    MaxWidth="600"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    BoxShadow="0 8 24 0 #40000000">
-                <StackPanel Spacing="24">
-                    <TextBlock Text="Contraseña Generada" 
-                               FontSize="28" FontWeight="Bold" 
-                               Foreground="#0b5394"
-                               HorizontalAlignment="Center"/>
-                    
-                    <TextBlock Text="Esta será la contraseña definitiva del usuario. Cópiala y entrégasela de manera segura."
-                               FontSize="16" Foreground="#666"
-                               TextWrapping="Wrap"
-                               TextAlignment="Center"/>
-
-                    <Border Background="#f8f9fa"
-                            CornerRadius="8"
-                            Padding="20"
-                            BorderThickness="2"
-                            BorderBrush="#0b5394">
-                        <TextBlock Text="{Binding PasswordGenerada}"
-                                   FontSize="32"
-                                   FontWeight="Bold"
-                                   Foreground="#0b5394"
-                                   HorizontalAlignment="Center"
-                                   FontFamily="Consolas"/>
-                    </Border>
-
-                    <StackPanel Orientation="Horizontal" 
-                                Spacing="16" 
-                                HorizontalAlignment="Center">
-                        <Button Classes="btn-primary"
-                                Command="{Binding CopiarPasswordCommand}"
-                                MinWidth="200">
-                            <TextBlock Text="Copiar Contraseña" FontSize="16"/>
-                        </Button>
-                        
-                        <Button Classes="btn-secondary"
-                                Command="{Binding CerrarModalPasswordCommand}"
-                                MinWidth="140">
-                            <TextBlock Text="Cerrar" FontSize="16"/>
-                        </Button>
-                    </StackPanel>
-                </StackPanel>
-            </Border>
-        </Border>
-
-        <!-- ============================================ -->
         <!-- INDICADOR DE CARGA -->
-        <!-- ============================================ -->
         <Border IsVisible="{Binding Cargando}"
                 Background="#80000000"
                 Grid.Row="0"
@@ -1000,9 +923,7 @@
             </Border>
         </Border>
 
-        <!-- ============================================ -->
         <!-- NOTIFICACIÓN DE ÉXITO/ERROR -->
-        <!-- ============================================ -->
         <Border IsVisible="{Binding MostrarMensajeExito}"
                 Background="{Binding MensajeExitoColor}"
                 CornerRadius="10"

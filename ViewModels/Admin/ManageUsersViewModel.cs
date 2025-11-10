@@ -146,16 +146,6 @@ public partial class ManageUsersViewModel : ObservableObject
     private ObservableCollection<LocalFormModel> _localesAsignados = new();
 
     // ============================================
-    // MODAL DE CONTRASEÑA
-    // ============================================
-
-    [ObservableProperty]
-    private bool _mostrarModalPassword;
-
-    [ObservableProperty]
-    private string _passwordGenerada = string.Empty;
-
-    // ============================================
     // ESTADÍSTICAS
     // ============================================
 
@@ -284,8 +274,6 @@ public partial class ManageUsersViewModel : ObservableObject
     {
         var usuarios = new List<UserModel>();
 
-        // ✅ CORRECCIÓN CRÍTICA: Solo usuarios normales con id_rol = 2
-        // Los administradores (id_rol = 1) tienen su propio módulo de gestión
         var query = @"SELECT u.id_usuario, u.numero_usuario, u.nombre, u.apellidos,
                              u.correo, COALESCE(u.telefono, '') as telefono, 
                              COALESCE(u.es_flooter, false) as es_flotante,
@@ -387,7 +375,7 @@ public partial class ManageUsersViewModel : ObservableObject
     }
 
     // ============================================
-    // COMANDOS - GENERAR Y COPIAR CONTRASEÑA
+    // COMANDOS - GENERAR CONTRASEÑA (MODIFICADO - SIN MODAL)
     // ============================================
 
     [RelayCommand]
@@ -398,36 +386,8 @@ public partial class ManageUsersViewModel : ObservableObject
         var password = new string(Enumerable.Repeat(chars, 12)
             .Select(s => s[random.Next(s.Length)]).ToArray());
 
-        PasswordGenerada = password;
         FormPassword = password;
-        MostrarModalPassword = true;
-    }
-
-    [RelayCommand]
-    private async Task CopiarPassword()
-    {
-        try
-        {
-            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-            {
-                var clipboard = desktop.MainWindow?.Clipboard;
-                if (clipboard != null)
-                {
-                    await clipboard.SetTextAsync(PasswordGenerada);
-                    MostrarMensajeExitoNotificacion("✓ Contraseña copiada al portapapeles");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            MostrarMensajeError($"Error al copiar: {ex.Message}");
-        }
-    }
-
-    [RelayCommand]
-    private void CerrarModalPassword()
-    {
-        MostrarModalPassword = false;
+        MostrarMensajeExitoNotificacion("✓ Contraseña generada");
     }
 
     // ============================================
@@ -484,14 +444,19 @@ public partial class ManageUsersViewModel : ObservableObject
 
             bool esFlotante = LocalesAsignados.Count > 1;
 
-            int? idLocalPrincipal = LocalesAsignados.FirstOrDefault()?.IdLocal;
+            // ✅ CORRECCIÓN CRÍTICA: Si es flooter, id_local debe ser NULL
+            // Los flooters trabajan en múltiples locales (se manejan en usuario_locales)
+            // Solo usuarios normales tienen un id_local asignado
+            int? idLocalPrincipal = esFlotante ? null : LocalesAsignados.FirstOrDefault()?.IdLocal;
             int? idComercio = null;
 
-            if (idLocalPrincipal.HasValue)
+            // Obtener id_comercio del primer local asignado
+            var primerLocal = LocalesAsignados.FirstOrDefault();
+            if (primerLocal != null)
             {
                 var queryComercio = "SELECT id_comercio FROM locales WHERE id_local = @IdLocal";
                 using var cmdComercio = new NpgsqlCommand(queryComercio, connection, transaction);
-                cmdComercio.Parameters.AddWithValue("@IdLocal", idLocalPrincipal.Value);
+                cmdComercio.Parameters.AddWithValue("@IdLocal", primerLocal.IdLocal);
                 var result = await cmdComercio.ExecuteScalarAsync();
                 if (result != null && result != DBNull.Value)
                 {
@@ -499,10 +464,6 @@ public partial class ManageUsersViewModel : ObservableObject
                 }
             }
 
-            // ✅ CORRECCIÓN CRÍTICA: 
-            // - id_rol = 2 para usuarios normales (id_rol = 1 es para admins Allva)
-            // - La columna es es_flooter (verificado en captura)
-            // - Las columnas son nombre y apellidos (separadas)
             var queryUsuario = @"
                 INSERT INTO usuarios (
                     id_comercio, id_local, id_rol, nombre, apellidos, correo, telefono,
@@ -533,7 +494,6 @@ public partial class ManageUsersViewModel : ObservableObject
 
             var idUsuario = Convert.ToInt32(await cmdUsuario.ExecuteScalarAsync());
 
-            // ✅ Insertar asignaciones en usuario_locales (ahora la tabla SÍ existe)
             foreach (var local in LocalesAsignados)
             {
                 var queryAsignacion = @"
@@ -570,14 +530,18 @@ public partial class ManageUsersViewModel : ObservableObject
         try
         {
             bool esFlotante = LocalesAsignados.Count > 1;
-            int? idLocalPrincipal = LocalesAsignados.FirstOrDefault()?.IdLocal;
+            
+            // ✅ CORRECCIÓN CRÍTICA: Si es flooter, id_local debe ser NULL
+            int? idLocalPrincipal = esFlotante ? null : LocalesAsignados.FirstOrDefault()?.IdLocal;
             int? idComercio = null;
 
-            if (idLocalPrincipal.HasValue)
+            // Obtener id_comercio del primer local asignado
+            var primerLocal = LocalesAsignados.FirstOrDefault();
+            if (primerLocal != null)
             {
                 var queryComercio = "SELECT id_comercio FROM locales WHERE id_local = @IdLocal";
                 using var cmdComercio = new NpgsqlCommand(queryComercio, connection, transaction);
-                cmdComercio.Parameters.AddWithValue("@IdLocal", idLocalPrincipal.Value);
+                cmdComercio.Parameters.AddWithValue("@IdLocal", primerLocal.IdLocal);
                 var result = await cmdComercio.ExecuteScalarAsync();
                 if (result != null && result != DBNull.Value)
                 {
@@ -585,7 +549,6 @@ public partial class ManageUsersViewModel : ObservableObject
                 }
             }
 
-            // ✅ CORRECCIÓN: es_flooter, nombre y apellidos separados
             var queryUsuario = @"
                 UPDATE usuarios SET
                     id_comercio = @IdComercio,
@@ -623,7 +586,6 @@ public partial class ManageUsersViewModel : ObservableObject
 
             await cmdUsuario.ExecuteNonQueryAsync();
 
-            // ✅ Actualizar asignaciones en usuario_locales
             var queryDeleteAsignaciones = "DELETE FROM usuario_locales WHERE id_usuario = @IdUsuario";
             using var cmdDelete = new NpgsqlCommand(queryDeleteAsignaciones, connection, transaction);
             cmdDelete.Parameters.AddWithValue("@IdUsuario", _usuarioEnEdicion.IdUsuario);
@@ -674,7 +636,6 @@ public partial class ManageUsersViewModel : ObservableObject
             }
             catch
             {
-                // Tabla puede no existir
             }
 
             var query = "DELETE FROM usuarios WHERE id_usuario = @Id";
@@ -795,7 +756,6 @@ public partial class ManageUsersViewModel : ObservableObject
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            // ✅ CORRECCIÓN: La columna es local_numero (no numero)
             var query = @"SELECT l.id_local, 
                                 l.codigo_local, 
                                 COALESCE(l.nombre_local, '') as nombre_local, 
@@ -938,7 +898,6 @@ public partial class ManageUsersViewModel : ObservableObject
             return false;
         }
 
-        // ✅ VALIDACIÓN CRÍTICA: Usuario DEBE tener al menos un local asignado
         if (!LocalesAsignados.Any())
         {
             mensajeError = "⚠️ DEBE asignar al menos un local al usuario.\n\n" +
@@ -947,7 +906,6 @@ public partial class ManageUsersViewModel : ObservableObject
             return false;
         }
 
-        // Verificar que los locales tengan IDs válidos
         if (LocalesAsignados.Any(l => l.IdLocal <= 0))
         {
             mensajeError = "Error: Hay locales asignados sin ID válido. Por favor, elimínalos y asígnalos nuevamente.";
@@ -964,7 +922,6 @@ public partial class ManageUsersViewModel : ObservableObject
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            // ✅ Cargar desde usuario_locales (ahora la tabla SÍ existe)
             var query = @"SELECT l.id_local, 
                                 l.codigo_local, 
                                 COALESCE(l.nombre_local, '') as nombre_local,
