@@ -23,6 +23,10 @@ namespace Allva.Desktop.ViewModels.Admin;
 /// 3. Tabla locales tiene: local_numero (NO numero) ✓
 /// 4. id_rol debe ser NULL para usuarios normales ✓
 /// 5. Los usuarios necesitan codigo_local para login ✓
+/// 6. Terminología "Flooter" en lugar de "Flotante" ✓
+/// 7. Filtro de comercio busca en TODOS los locales del comercio ✓
+/// 8. Filtro de código de local encuentra flooters que trabajen ahí ✓
+/// 9. Botón limpiar filtros agregado ✓
 /// </summary>
 public partial class ManageUsersViewModel : ObservableObject
 {
@@ -152,10 +156,17 @@ public partial class ManageUsersViewModel : ObservableObject
     public int TotalUsuarios => Usuarios.Count;
     public int UsuariosActivos => Usuarios.Count(u => u.Activo);
     public int UsuariosInactivos => Usuarios.Count(u => !u.Activo);
-    public int UsuariosFlotantes => Usuarios.Count(u => u.EsFlotante);
+    
+    /// <summary>
+    /// ✅ CORRECCIÓN: Cambiar "UsuariosFlotantes" por "UsuariosFlooters"
+    /// </summary>
+    public int UsuariosFlooters => Usuarios.Count(u => u.EsFlotante);
 
     // Usuario en edición
     private UserModel? _usuarioEnEdicion;
+    
+    // ✅ NUEVO: Diccionario para mapear usuarios con sus locales (para filtros)
+    private Dictionary<int, List<string>> _usuariosConLocales = new();
 
     // ============================================
     // CONSTRUCTOR
@@ -252,11 +263,14 @@ public partial class ManageUsersViewModel : ObservableObject
             {
                 Usuarios.Add(usuario);
             }
+            
+            // ✅ NUEVO: Cargar mapeo de usuarios con todos sus locales
+            await CargarMapeoUsuariosLocales(connection);
 
             OnPropertyChanged(nameof(TotalUsuarios));
             OnPropertyChanged(nameof(UsuariosActivos));
             OnPropertyChanged(nameof(UsuariosInactivos));
-            OnPropertyChanged(nameof(UsuariosFlotantes));
+            OnPropertyChanged(nameof(UsuariosFlooters));
 
             await InicializarFiltros();
         }
@@ -314,6 +328,36 @@ public partial class ManageUsersViewModel : ObservableObject
         }
 
         return usuarios;
+    }
+    
+    /// <summary>
+    /// ✅ NUEVO: Carga todos los locales donde trabaja cada usuario (incluyendo flooters)
+    /// Esto permite que los filtros funcionen correctamente
+    /// </summary>
+    private async Task CargarMapeoUsuariosLocales(NpgsqlConnection connection)
+    {
+        _usuariosConLocales.Clear();
+        
+        var query = @"SELECT ul.id_usuario, l.codigo_local
+                      FROM usuario_locales ul
+                      INNER JOIN locales l ON ul.id_local = l.id_local
+                      ORDER BY ul.id_usuario";
+        
+        using var cmd = new NpgsqlCommand(query, connection);
+        using var reader = await cmd.ExecuteReaderAsync();
+        
+        while (await reader.ReadAsync())
+        {
+            var idUsuario = reader.GetInt32(0);
+            var codigoLocal = reader.GetString(1);
+            
+            if (!_usuariosConLocales.ContainsKey(idUsuario))
+            {
+                _usuariosConLocales[idUsuario] = new List<string>();
+            }
+            
+            _usuariosConLocales[idUsuario].Add(codigoLocal);
+        }
     }
 
     // ============================================
@@ -375,7 +419,7 @@ public partial class ManageUsersViewModel : ObservableObject
     }
 
     // ============================================
-    // COMANDOS - GENERAR CONTRASEÑA (MODIFICADO - SIN MODAL)
+    // COMANDOS - GENERAR CONTRASEÑA
     // ============================================
 
     [RelayCommand]
@@ -444,13 +488,9 @@ public partial class ManageUsersViewModel : ObservableObject
 
             bool esFlotante = LocalesAsignados.Count > 1;
 
-            // ✅ CORRECCIÓN CRÍTICA: Si es flooter, id_local debe ser NULL
-            // Los flooters trabajan en múltiples locales (se manejan en usuario_locales)
-            // Solo usuarios normales tienen un id_local asignado
             int? idLocalPrincipal = esFlotante ? null : LocalesAsignados.FirstOrDefault()?.IdLocal;
             int? idComercio = null;
 
-            // Obtener id_comercio del primer local asignado
             var primerLocal = LocalesAsignados.FirstOrDefault();
             if (primerLocal != null)
             {
@@ -531,11 +571,9 @@ public partial class ManageUsersViewModel : ObservableObject
         {
             bool esFlotante = LocalesAsignados.Count > 1;
             
-            // ✅ CORRECCIÓN CRÍTICA: Si es flooter, id_local debe ser NULL
             int? idLocalPrincipal = esFlotante ? null : LocalesAsignados.FirstOrDefault()?.IdLocal;
             int? idComercio = null;
 
-            // Obtener id_comercio del primer local asignado
             var primerLocal = LocalesAsignados.FirstOrDefault();
             if (primerLocal != null)
             {
@@ -701,6 +739,7 @@ public partial class ManageUsersViewModel : ObservableObject
     {
         var filtrados = Usuarios.AsEnumerable();
 
+        // Filtro de búsqueda por texto
         if (!string.IsNullOrWhiteSpace(FiltroBusqueda))
         {
             filtrados = filtrados.Where(u =>
@@ -709,22 +748,68 @@ public partial class ManageUsersViewModel : ObservableObject
                 u.Correo.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase));
         }
 
+        // ✅ FILTRO DE CÓDIGO DE LOCAL CORREGIDO: Ahora busca en usuario_locales para flooters
         if (!string.IsNullOrEmpty(FiltroLocal) && FiltroLocal != "Todos")
         {
-            filtrados = filtrados.Where(u => u.CodigoLocal == FiltroLocal);
+            filtrados = filtrados.Where(u =>
+            {
+                // Si el usuario tiene ese local como principal, incluirlo
+                if (u.CodigoLocal == FiltroLocal)
+                    return true;
+                
+                // Si es flooter, buscar en todos sus locales asignados
+                if (u.EsFlotante && _usuariosConLocales.ContainsKey(u.IdUsuario))
+                {
+                    return _usuariosConLocales[u.IdUsuario].Contains(FiltroLocal);
+                }
+                
+                return false;
+            });
         }
 
+        // ✅ FILTRO DE COMERCIO CORREGIDO: Ahora busca en TODOS los locales del comercio
         if (!string.IsNullOrEmpty(FiltroComercio) && FiltroComercio != "Todos")
         {
-            filtrados = filtrados.Where(u => u.NombreComercio == FiltroComercio);
+            filtrados = filtrados.Where(u =>
+            {
+                // Si el comercio principal coincide
+                if (u.NombreComercio == FiltroComercio)
+                    return true;
+                
+                // Si es flooter, verificar si alguno de sus locales pertenece al comercio
+                if (u.EsFlotante && _usuariosConLocales.ContainsKey(u.IdUsuario))
+                {
+                    // Verificar en la base de datos si alguno de los locales del usuario pertenece al comercio
+                    using var connection = new NpgsqlConnection(ConnectionString);
+                    connection.Open();
+                    
+                    var query = @"SELECT COUNT(*) 
+                                  FROM usuario_locales ul
+                                  INNER JOIN locales l ON ul.id_local = l.id_local
+                                  INNER JOIN comercios c ON l.id_comercio = c.id_comercio
+                                  WHERE ul.id_usuario = @IdUsuario 
+                                  AND c.nombre_comercio = @NombreComercio";
+                    
+                    using var cmd = new NpgsqlCommand(query, connection);
+                    cmd.Parameters.AddWithValue("@IdUsuario", u.IdUsuario);
+                    cmd.Parameters.AddWithValue("@NombreComercio", FiltroComercio);
+                    
+                    var count = Convert.ToInt32(cmd.ExecuteScalar());
+                    return count > 0;
+                }
+                
+                return false;
+            });
         }
 
+        // Filtro de estado
         if (!string.IsNullOrEmpty(FiltroEstado) && FiltroEstado != "Todos")
         {
             var activo = FiltroEstado == "Activo";
             filtrados = filtrados.Where(u => u.Activo == activo);
         }
 
+        // Filtro de tipo de usuario
         if (!string.IsNullOrEmpty(FiltroTipoUsuario) && FiltroTipoUsuario != "Todos")
         {
             var esFlotante = FiltroTipoUsuario == "Flooter";
@@ -736,6 +821,28 @@ public partial class ManageUsersViewModel : ObservableObject
         {
             UsuariosFiltrados.Add(usuario);
         }
+    }
+    
+    /// <summary>
+    /// ✅ NUEVO: Comando para limpiar todos los filtros
+    /// </summary>
+    [RelayCommand]
+    private void LimpiarFiltros()
+    {
+        FiltroBusqueda = string.Empty;
+        FiltroLocal = "Todos";
+        FiltroComercio = "Todos";
+        FiltroEstado = "Todos";
+        FiltroTipoUsuario = "Todos";
+        
+        // Recargar todos los usuarios
+        UsuariosFiltrados.Clear();
+        foreach (var usuario in Usuarios.OrderBy(u => u.NombreCompleto))
+        {
+            UsuariosFiltrados.Add(usuario);
+        }
+        
+        MostrarMensajeExitoNotificacion("✓ Filtros limpiados");
     }
 
     // ============================================

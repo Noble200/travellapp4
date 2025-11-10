@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Allva.Desktop.Models.Admin;
 
@@ -6,6 +8,7 @@ namespace Allva.Desktop.Models.Admin;
 /// Modelo de datos para Administradores Allva
 /// Representa usuarios del Back Office que gestionan el sistema
 /// NO se asignan a locales - Completamente separados de usuarios normales
+/// ACTUALIZADO: Sistema de 4 niveles + módulos habilitados
 /// </summary>
 public class AdministradorAllvaModel
 {
@@ -38,7 +41,24 @@ public class AdministradorAllvaModel
     public string? Telefono { get; set; }
 
     // ============================================
-    // PERMISOS DEL PANEL DE ADMINISTRACIÓN
+    // ⭐ NUEVO: SISTEMA DE NIVELES DE ACCESO
+    // ============================================
+
+    /// <summary>
+    /// Nivel de acceso del administrador (1-4)
+    /// 1 = Visualizador, 2 = Admin Limitado, 3 = Admin Completo, 4 = Super Admin
+    /// </summary>
+    public int NivelAcceso { get; set; } = 1;
+
+    /// <summary>
+    /// Lista de módulos habilitados para este administrador
+    /// Se almacena en la tabla admin_modulos_habilitados
+    /// </summary>
+    public List<string> ModulosHabilitados { get; set; } = new();
+
+    // ============================================
+    // PERMISOS DEL PANEL DE ADMINISTRACIÓN (LEGACY)
+    // Se mantienen por compatibilidad con el sistema existente
     // ============================================
 
     public bool AccesoGestionComercios { get; set; } = true;
@@ -77,7 +97,7 @@ public class AdministradorAllvaModel
     // PROPIEDADES CALCULADAS PARA UI
     // ============================================
 
-    public string EstadoTexto => Activo ? "Activo" : "Inactivo";
+    public string EstadoTexto => Activo ? "Activo" : "Bloqueado";
     public string EstadoColor => Activo ? "#28a745" : "#dc3545";
     
     public string Iniciales
@@ -90,14 +110,87 @@ public class AdministradorAllvaModel
         }
     }
 
-    public string TipoAdminColor => EsSuperAdministrador ? "#dc3545" : "#ffc107";
-    public string EstadoBotonTexto => Activo ? "Desactivar" : "Activar";
+    // Botón de cambio de estado
+    public string EstadoBotonTexto => Activo ? "Bloquear" : "Activar";
     public string EstadoBotonColor => Activo ? "#dc3545" : "#28a745";
-    public bool EsSuperAdministrador => AccesoGestionUsuariosAllva;
-    public string TipoAdministrador => EsSuperAdministrador ? "Super Admin" : "Admin Limitado";
-    public bool EstaBloqueado => BloqueadoHasta.HasValue && BloqueadoHasta.Value > DateTime.Now;
 
-    // ⭐ NUEVA PROPIEDAD REQUERIDA
+    // ============================================
+    // ⭐ PROPIEDADES BASADAS EN NIVELES
+    // ============================================
+
+    public bool EsSuperAdministrador => NivelAcceso == 4;
+    
+    public string NombreNivel => NivelAcceso switch
+    {
+        1 => "Nivel 1",
+        2 => "Nivel 2",
+        3 => "Nivel 3",
+        4 => "Nivel 4",
+        _ => "Sin nivel"
+    };
+
+    public string DescripcionNivel => NivelAcceso switch
+    {
+        1 => "Puede ver y editar pestañas de un módulo concreto (Balance, Operaciones o Informes).",
+        2 => "Puede ver y editar módulos concretos, dar altas y editar comercios o usuarios del módulo asignado.",
+        3 => "Puede ver y editar todos los módulos excepto crear usuarios de Allva.",
+        4 => "Acceso total: puede crear, editar y aprobar nuevos usuarios Allva y gestionar niveles de acceso.",
+        _ => "Sin descripción"
+    };
+
+    public string ColorNivel => NivelAcceso switch
+    {
+        1 => "#6c757d", // Gris
+        2 => "#17a2b8", // Azul claro
+        3 => "#ffc107", // Amarillo
+        4 => "#dc3545", // Rojo
+        _ => "#6c757d"
+    };
+
+    public string TipoAdministrador => NivelAcceso switch
+    {
+        1 => "Visualizador",
+        2 => "Admin Limitado",
+        3 => "Admin Completo",
+        4 => "Super Admin",
+        _ => "Sin nivel"
+    };
+
+    // ============================================
+    // ⭐ MÓDULOS HABILITADOS (TEXTO PARA UI)
+    // ============================================
+
+    public string ModulosHabilitadosTexto
+    {
+        get
+        {
+            if (NivelAcceso >= 3)
+            {
+                return "Todos los módulos (por nivel de acceso)";
+            }
+
+            if (ModulosHabilitados == null || !ModulosHabilitados.Any())
+            {
+                return "Ningún módulo asignado";
+            }
+
+            var nombresLegibles = ModulosHabilitados.Select(codigo => codigo switch
+            {
+                "compra_divisa" => "Compra de Divisa",
+                "packs_alimentos" => "Packs de Alimentos",
+                "billetes_avion" => "Billetes de Avión",
+                "pack_viajes" => "Pack de Viajes",
+                _ => codigo
+            });
+
+            return string.Join(", ", nombresLegibles);
+        }
+    }
+
+    // ============================================
+    // PROPIEDADES DE TIEMPO
+    // ============================================
+
     public string UltimoAccesoTexto
     {
         get
@@ -122,6 +215,30 @@ public class AdministradorAllvaModel
         }
     }
 
+    public string TiempoDesdeUltimoAcceso
+    {
+        get
+        {
+            if (!UltimoAcceso.HasValue)
+                return "Nunca";
+
+            var tiempo = DateTime.Now - UltimoAcceso.Value;
+
+            if (tiempo.TotalMinutes < 60)
+                return $"Hace {(int)tiempo.TotalMinutes} min";
+            else if (tiempo.TotalHours < 24)
+                return $"Hace {(int)tiempo.TotalHours} h";
+            else
+                return $"Hace {(int)tiempo.TotalDays} días";
+        }
+    }
+
+    // ============================================
+    // MÉTODOS LEGACY (SE MANTIENEN POR COMPATIBILIDAD)
+    // ============================================
+
+    public bool EstaBloqueado => BloqueadoHasta.HasValue && BloqueadoHasta.Value > DateTime.Now;
+
     public int CantidadModulosAcceso
     {
         get
@@ -142,7 +259,7 @@ public class AdministradorAllvaModel
     {
         get
         {
-            var modulos = new System.Collections.Generic.List<string>();
+            var modulos = new List<string>();
             
             if (AccesoGestionComercios) modulos.Add("Comercios");
             if (AccesoGestionUsuariosLocales) modulos.Add("Usuarios");
@@ -156,26 +273,26 @@ public class AdministradorAllvaModel
         }
     }
 
-    public string TiempoDesdeUltimoAcceso
-    {
-        get
-        {
-            if (!UltimoAcceso.HasValue)
-                return "Nunca";
-
-            var tiempo = DateTime.Now - UltimoAcceso.Value;
-
-            if (tiempo.TotalMinutes < 60)
-                return $"Hace {(int)tiempo.TotalMinutes} min";
-            else if (tiempo.TotalHours < 24)
-                return $"Hace {(int)tiempo.TotalHours} h";
-            else
-                return $"Hace {(int)tiempo.TotalDays} días";
-        }
-    }
-
     public bool TienePermiso(string nombreModulo)
     {
+        // Sistema de niveles tiene prioridad
+        if (NivelAcceso >= 3)
+            return true; // Nivel 3 y 4 tienen acceso a todo
+
+        // Verificar módulos específicos habilitados
+        if (ModulosHabilitados != null && ModulosHabilitados.Any())
+        {
+            return nombreModulo.ToLower() switch
+            {
+                "compra_divisa" => ModulosHabilitados.Contains("compra_divisa"),
+                "packs_alimentos" => ModulosHabilitados.Contains("packs_alimentos"),
+                "billetes_avion" => ModulosHabilitados.Contains("billetes_avion"),
+                "pack_viajes" => ModulosHabilitados.Contains("pack_viajes"),
+                _ => false
+            };
+        }
+
+        // Fallback a permisos legacy
         return nombreModulo.ToLower() switch
         {
             "comercios" => AccesoGestionComercios,
@@ -188,4 +305,32 @@ public class AdministradorAllvaModel
             _ => false
         };
     }
+
+    /// <summary>
+    /// Verifica si el administrador puede gestionar otros administradores
+    /// Solo nivel 4 (Super Admin) puede hacerlo
+    /// </summary>
+    public bool PuedeGestionarAdministradores => NivelAcceso == 4;
+
+    /// <summary>
+    /// Verifica si el administrador puede gestionar comercios y usuarios de locales
+    /// Niveles 2, 3 y 4 pueden hacerlo
+    /// </summary>
+    public bool PuedeGestionarComerciosYUsuarios => NivelAcceso >= 2;
+
+    /// <summary>
+    /// Verifica si el administrador tiene acceso a analytics
+    /// Niveles 3 y 4 tienen acceso
+    /// </summary>
+    public bool TieneAccesoAnalytics => NivelAcceso >= 3;
+}
+
+/// <summary>
+/// Modelo para niveles de acceso (tabla: niveles_acceso)
+/// </summary>
+public class NivelAccesoModel
+{
+    public int IdNivel { get; set; }
+    public string NombreNivel { get; set; } = string.Empty;
+    public string Descripcion { get; set; } = string.Empty;
 }

@@ -6,6 +6,7 @@ namespace Allva.Desktop.Models;
 
 /// <summary>
 /// Modelo de usuario del sistema
+/// ACTUALIZADO: Propiedad TipoUsuarioDisplay para mostrar "Flooter" en lugar de "Flotante"
 /// </summary>
 public class UserModel : INotifyPropertyChanged
 {
@@ -54,7 +55,15 @@ public class UserModel : INotifyPropertyChanged
     
     public string NombreCompleto => $"{Nombre} {Apellidos}";
     
+    /// <summary>
+    /// Tipo de usuario original para compatibilidad interna
+    /// </summary>
     public string TipoUsuario => EsFlotante ? "Flotante" : "Normal";
+    
+    /// <summary>
+    /// ✅ NUEVO: Tipo de usuario para mostrar en UI (Flooter en lugar de Flotante)
+    /// </summary>
+    public string TipoUsuarioDisplay => EsFlotante ? "Flooter" : "Normal";
     
     public string EstadoTexto => Activo ? "Activo" : "Inactivo";
     

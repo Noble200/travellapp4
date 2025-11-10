@@ -13,11 +13,16 @@ namespace Allva.Desktop.ViewModels.Admin;
 
 /// <summary>
 /// ViewModel COMPLETO para gestión de Administradores Allva
-/// TODAS las funcionalidades CRUD implementadas
+/// FASE 1: Sistema de 4 niveles de acceso + módulos habilitados
+/// ACTUALIZADO: Filtros corregidos con índices, botón limpiar, sin iconos
 /// </summary>
 public partial class ManageAdministradoresAllvaViewModel : ObservableObject
 {
     private const string ConnectionString = "Host=switchyard.proxy.rlwy.net;Port=55839;Database=railway;Username=postgres;Password=ysTQxChOYSWUuAPzmYQokqrjpYnKSGbk;";
+
+    // ============================================
+    // COLECCIONES PRINCIPALES
+    // ============================================
 
     [ObservableProperty]
     private ObservableCollection<AdministradorAllvaModel> _administradores = new();
@@ -27,6 +32,21 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
 
     [ObservableProperty]
     private AdministradorAllvaModel? _administradorSeleccionado;
+
+    [ObservableProperty]
+    private ObservableCollection<NivelAccesoModel> _nivelesDisponibles = new();
+
+    public List<ModuloDisponible> ModulosDisponibles { get; } = new()
+    {
+        new ModuloDisponible { Codigo = "compra_divisa", Nombre = "Compra de Divisa" },
+        new ModuloDisponible { Codigo = "packs_alimentos", Nombre = "Packs de Alimentos" },
+        new ModuloDisponible { Codigo = "billetes_avion", Nombre = "Billetes de Avión" },
+        new ModuloDisponible { Codigo = "pack_viajes", Nombre = "Pack de Viajes" }
+    };
+
+    // ============================================
+    // ESTADOS DE UI
+    // ============================================
 
     [ObservableProperty]
     private bool _cargando;
@@ -52,6 +72,10 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
     [ObservableProperty]
     private string _tituloBotonGuardar = "Crear";
 
+    // ============================================
+    // CAMPOS DEL FORMULARIO - DATOS PERSONALES
+    // ============================================
+
     [ObservableProperty]
     private string _formNombre = string.Empty;
 
@@ -73,37 +97,109 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
     [ObservableProperty]
     private bool _formActivo = true;
 
-    [ObservableProperty]
-    private bool _formAccesoGestionComercios = true;
+    // ============================================
+    // CAMPOS DEL FORMULARIO - SISTEMA DE NIVELES
+    // ============================================
 
     [ObservableProperty]
-    private bool _formAccesoGestionUsuariosLocales = true;
+    private int _formNivelAcceso = 1;
+
+    public int FormNivelAccesoIndex
+    {
+        get => FormNivelAcceso - 1;
+        set
+        {
+            if (FormNivelAcceso != value + 1)
+            {
+                FormNivelAcceso = value + 1;
+            }
+        }
+    }
 
     [ObservableProperty]
-    private bool _formAccesoGestionUsuariosAllva = false;
+    private string _formDescripcionNivel = string.Empty;
 
     [ObservableProperty]
-    private bool _formAccesoAnalytics = false;
+    private ObservableCollection<ModuloCheckbox> _formModulosSeleccionables = new();
+
+    // ============================================
+    // FILTROS DE BÚSQUEDA (CORREGIDOS CON ÍNDICES)
+    // ============================================
 
     [ObservableProperty]
     private string _filtroBusqueda = string.Empty;
 
     [ObservableProperty]
-    private string _filtroEstado = "Todos";
+    private int _filtroNivelSeleccionado = 0; // 0 = Todos, 1-4 = Niveles
 
     [ObservableProperty]
-    private string _filtroTipo = "Todos";
+    private int _filtroEstadoSeleccionado = 0; // 0 = Todos, 1 = Activo, 2 = Inactivo
+
+    // ============================================
+    // ESTADÍSTICAS
+    // ============================================
 
     public int TotalAdministradores => Administradores.Count;
     public int AdministradoresActivos => Administradores.Count(a => a.Activo);
     public int AdministradoresInactivos => Administradores.Count(a => !a.Activo);
-    public int SuperAdministradores => Administradores.Count(a => a.EsSuperAdministrador);
+    public int SuperAdministradores => Administradores.Count(a => a.NivelAcceso == 4);
 
     private AdministradorAllvaModel? _administradorEnEdicion;
 
+    // ============================================
+    // CONSTRUCTOR
+    // ============================================
+
     public ManageAdministradoresAllvaViewModel()
     {
-        _ = CargarAdministradores();
+        InicializarModulosSeleccionables();
+        _ = CargarDatos();
+    }
+
+    // ============================================
+    // CARGA DE DATOS
+    // ============================================
+
+    private async Task CargarDatos()
+    {
+        await CargarNivelesDisponibles();
+        await CargarAdministradores();
+    }
+
+    private async Task CargarNivelesDisponibles()
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(ConnectionString);
+            await connection.OpenAsync();
+
+            var query = "SELECT id_nivel, nombre_nivel, descripcion FROM niveles_acceso ORDER BY id_nivel";
+
+            using var cmd = new NpgsqlCommand(query, connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            var niveles = new List<NivelAccesoModel>();
+
+            while (await reader.ReadAsync())
+            {
+                niveles.Add(new NivelAccesoModel
+                {
+                    IdNivel = reader.GetInt32(0),
+                    NombreNivel = reader.GetString(1),
+                    Descripcion = reader.GetString(2)
+                });
+            }
+
+            NivelesDisponibles.Clear();
+            foreach (var nivel in niveles)
+            {
+                NivelesDisponibles.Add(nivel);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar niveles: {ex.Message}");
+        }
     }
 
     private async Task CargarAdministradores()
@@ -118,10 +214,9 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
             var query = @"
                 SELECT 
                     id_administrador, nombre, apellidos, nombre_usuario, correo, telefono,
+                    nivel_acceso, activo, ultimo_acceso, fecha_creacion,
                     acceso_gestion_comercios, acceso_gestion_usuarios_locales, 
-                    acceso_gestion_usuarios_allva, acceso_analytics, 
-                    acceso_configuracion_sistema, acceso_facturacion_global, 
-                    acceso_auditoria, activo, ultimo_acceso, fecha_creacion
+                    acceso_gestion_usuarios_allva, acceso_analytics
                 FROM administradores_allva
                 ORDER BY nombre, apellidos";
 
@@ -132,7 +227,7 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
 
             while (await reader.ReadAsync())
             {
-                lista.Add(new AdministradorAllvaModel
+                var admin = new AdministradorAllvaModel
                 {
                     IdAdministrador = reader.GetInt32(0),
                     Nombre = reader.GetString(1),
@@ -140,17 +235,25 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
                     NombreUsuario = reader.GetString(3),
                     Correo = reader.GetString(4),
                     Telefono = reader.IsDBNull(5) ? "N/A" : reader.GetString(5),
-                    AccesoGestionComercios = reader.GetBoolean(6),
-                    AccesoGestionUsuariosLocales = reader.GetBoolean(7),
-                    AccesoGestionUsuariosAllva = reader.GetBoolean(8),
-                    AccesoAnalytics = reader.GetBoolean(9),
-                    AccesoConfiguracionSistema = reader.GetBoolean(10),
-                    AccesoFacturacionGlobal = reader.GetBoolean(11),
-                    AccesoAuditoria = reader.GetBoolean(12),
-                    Activo = reader.GetBoolean(13),
-                    UltimoAcceso = reader.IsDBNull(14) ? null : reader.GetDateTime(14),
-                    FechaCreacion = reader.GetDateTime(15)
-                });
+                    NivelAcceso = reader.IsDBNull(6) ? 1 : reader.GetInt32(6),
+                    Activo = reader.GetBoolean(7),
+                    UltimoAcceso = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
+                    FechaCreacion = reader.GetDateTime(9),
+                    AccesoGestionComercios = reader.GetBoolean(10),
+                    AccesoGestionUsuariosLocales = reader.GetBoolean(11),
+                    AccesoGestionUsuariosAllva = reader.GetBoolean(12),
+                    AccesoAnalytics = reader.GetBoolean(13)
+                };
+
+                lista.Add(admin);
+            }
+
+            reader.Close();
+
+            // Cargar módulos habilitados
+            foreach (var admin in lista)
+            {
+                admin.ModulosHabilitados = await CargarModulosHabilitados(admin.IdAdministrador, connection);
             }
 
             Administradores.Clear();
@@ -160,12 +263,11 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
             }
 
             AdministradoresFiltrados = new ObservableCollection<AdministradorAllvaModel>(lista);
-
             ActualizarEstadisticas();
         }
         catch (Exception ex)
         {
-            MensajeExito = $"❌ Error al cargar administradores: {ex.Message}";
+            MensajeExito = $"Error: {ex.Message}";
             MostrarMensajeExito = true;
             await Task.Delay(3000);
             MostrarMensajeExito = false;
@@ -176,6 +278,23 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
         }
     }
 
+    private async Task<List<string>> CargarModulosHabilitados(int idAdmin, NpgsqlConnection connection)
+    {
+        var modulos = new List<string>();
+        var query = "SELECT nombre_modulo FROM admin_modulos_habilitados WHERE id_administrador = @IdAdmin";
+        
+        using var cmd = new NpgsqlCommand(query, connection);
+        cmd.Parameters.AddWithValue("@IdAdmin", idAdmin);
+
+        using var reader = await cmd.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            modulos.Add(reader.GetString(0));
+        }
+
+        return modulos;
+    }
+
     private void ActualizarEstadisticas()
     {
         OnPropertyChanged(nameof(TotalAdministradores));
@@ -183,6 +302,10 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
         OnPropertyChanged(nameof(AdministradoresInactivos));
         OnPropertyChanged(nameof(SuperAdministradores));
     }
+
+    // ============================================
+    // COMANDOS
+    // ============================================
 
     [RelayCommand]
     private void MostrarFormularioCrear()
@@ -193,6 +316,7 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
         TituloBotonGuardar = "Crear";
         MostrarFormulario = true;
         MostrarPanelDerecho = true;
+        ActualizarDescripcionNivel();
     }
 
     [RelayCommand]
@@ -207,17 +331,20 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
         FormCorreo = admin.Correo;
         FormTelefono = admin.Telefono ?? string.Empty;
         FormActivo = admin.Activo;
-        FormAccesoGestionComercios = admin.AccesoGestionComercios;
-        FormAccesoGestionUsuariosLocales = admin.AccesoGestionUsuariosLocales;
-        FormAccesoGestionUsuariosAllva = admin.AccesoGestionUsuariosAllva;
-        FormAccesoAnalytics = admin.AccesoAnalytics;
+        FormNivelAcceso = admin.NivelAcceso;
         FormPassword = string.Empty;
+
+        foreach (var modulo in FormModulosSeleccionables)
+        {
+            modulo.Seleccionado = admin.ModulosHabilitados.Contains(modulo.Codigo);
+        }
 
         ModoEdicion = true;
         TituloPanelDerecho = $"Editar: {admin.NombreCompleto}";
         TituloBotonGuardar = "Actualizar";
         MostrarFormulario = true;
         MostrarPanelDerecho = true;
+        ActualizarDescripcionNivel();
         
         await Task.CompletedTask;
     }
@@ -229,7 +356,6 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
         TituloPanelDerecho = $"Detalles de {admin.NombreCompleto}";
         MostrarFormulario = false;
         MostrarPanelDerecho = true;
-        
         await Task.CompletedTask;
     }
 
@@ -247,7 +373,7 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
     {
         if (!ValidarFormulario(out string mensajeError))
         {
-            MensajeExito = $"⚠️ {mensajeError}";
+            MensajeExito = $"Advertencia: {mensajeError}";
             MostrarMensajeExito = true;
             await Task.Delay(4000);
             MostrarMensajeExito = false;
@@ -261,12 +387,12 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
             if (ModoEdicion && _administradorEnEdicion != null)
             {
                 await ActualizarAdministrador();
-                MensajeExito = "✓ Administrador actualizado correctamente";
+                MensajeExito = "Administrador actualizado";
             }
             else
             {
                 await CrearNuevoAdministrador();
-                MensajeExito = "✓ Administrador creado correctamente";
+                MensajeExito = "Administrador creado";
             }
 
             await CargarAdministradores();
@@ -278,7 +404,7 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            MensajeExito = $"❌ Error al guardar: {ex.Message}";
+            MensajeExito = $"Error: {ex.Message}";
             MostrarMensajeExito = true;
             await Task.Delay(5000);
             MostrarMensajeExito = false;
@@ -293,41 +419,59 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
     {
         using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
+        using var transaction = await connection.BeginTransactionAsync();
 
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(FormPassword);
+        try
+        {
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(FormPassword);
 
-        var query = @"
-            INSERT INTO administradores_allva (
-                nombre, apellidos, nombre_usuario, password_hash, correo, telefono,
-                acceso_gestion_comercios, acceso_gestion_usuarios_locales, 
-                acceso_gestion_usuarios_allva, acceso_analytics,
-                acceso_configuracion_sistema, acceso_facturacion_global, acceso_auditoria,
-                activo, primer_login, creado_por, idioma, fecha_creacion
-            )
-            VALUES (
-                @Nombre, @Apellidos, @NombreUsuario, @PasswordHash, @Correo, @Telefono,
-                @AccesoGestionComercios, @AccesoGestionUsuariosLocales,
-                @AccesoGestionUsuariosAllva, @AccesoAnalytics,
-                false, false, false,
-                @Activo, true, 'SISTEMA', 'es', @FechaCreacion
-            )";
+            var query = @"
+                INSERT INTO administradores_allva (
+                    nombre, apellidos, nombre_usuario, password_hash, correo, telefono,
+                    nivel_acceso, activo, primer_login, creado_por, idioma, fecha_creacion,
+                    acceso_gestion_comercios, acceso_gestion_usuarios_locales, 
+                    acceso_gestion_usuarios_allva, acceso_analytics
+                )
+                VALUES (
+                    @Nombre, @Apellidos, @NombreUsuario, @PasswordHash, @Correo, @Telefono,
+                    @NivelAcceso, @Activo, true, 'SISTEMA', 'es', @FechaCreacion,
+                    @AccesoGestionComercios, @AccesoGestionUsuariosLocales,
+                    @AccesoGestionUsuariosAllva, @AccesoAnalytics
+                )
+                RETURNING id_administrador";
 
-        using var cmd = new NpgsqlCommand(query, connection);
-        cmd.Parameters.AddWithValue("@Nombre", FormNombre);
-        cmd.Parameters.AddWithValue("@Apellidos", FormApellidos);
-        cmd.Parameters.AddWithValue("@NombreUsuario", FormNombreUsuario);
-        cmd.Parameters.AddWithValue("@PasswordHash", passwordHash);
-        cmd.Parameters.AddWithValue("@Correo", FormCorreo);
-        cmd.Parameters.AddWithValue("@Telefono", 
-            string.IsNullOrWhiteSpace(FormTelefono) ? DBNull.Value : FormTelefono);
-        cmd.Parameters.AddWithValue("@AccesoGestionComercios", FormAccesoGestionComercios);
-        cmd.Parameters.AddWithValue("@AccesoGestionUsuariosLocales", FormAccesoGestionUsuariosLocales);
-        cmd.Parameters.AddWithValue("@AccesoGestionUsuariosAllva", FormAccesoGestionUsuariosAllva);
-        cmd.Parameters.AddWithValue("@AccesoAnalytics", FormAccesoAnalytics);
-        cmd.Parameters.AddWithValue("@Activo", FormActivo);
-        cmd.Parameters.AddWithValue("@FechaCreacion", DateTime.Now);
+            using var cmd = new NpgsqlCommand(query, connection, transaction);
+            cmd.Parameters.AddWithValue("@Nombre", FormNombre);
+            cmd.Parameters.AddWithValue("@Apellidos", FormApellidos);
+            cmd.Parameters.AddWithValue("@NombreUsuario", FormNombreUsuario);
+            cmd.Parameters.AddWithValue("@PasswordHash", passwordHash);
+            cmd.Parameters.AddWithValue("@Correo", FormCorreo);
+            cmd.Parameters.AddWithValue("@Telefono", 
+                string.IsNullOrWhiteSpace(FormTelefono) ? DBNull.Value : FormTelefono);
+            cmd.Parameters.AddWithValue("@NivelAcceso", FormNivelAcceso);
+            cmd.Parameters.AddWithValue("@Activo", FormActivo);
+            cmd.Parameters.AddWithValue("@FechaCreacion", DateTime.Now);
+            
+            var (comercios, usuarios, admins, analytics) = CalcularPermisosLegacy(FormNivelAcceso);
+            cmd.Parameters.AddWithValue("@AccesoGestionComercios", comercios);
+            cmd.Parameters.AddWithValue("@AccesoGestionUsuariosLocales", usuarios);
+            cmd.Parameters.AddWithValue("@AccesoGestionUsuariosAllva", admins);
+            cmd.Parameters.AddWithValue("@AccesoAnalytics", analytics);
 
-        await cmd.ExecuteNonQueryAsync();
+            var idAdmin = (int)(await cmd.ExecuteScalarAsync() ?? 0);
+
+            if (FormNivelAcceso < 3)
+            {
+                await GuardarModulosHabilitados(idAdmin, connection, transaction);
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     private async Task ActualizarAdministrador()
@@ -336,49 +480,94 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
 
         using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
+        using var transaction = await connection.BeginTransactionAsync();
 
-        var queryBase = @"
-            UPDATE administradores_allva SET
-                nombre = @Nombre,
-                apellidos = @Apellidos,
-                correo = @Correo,
-                telefono = @Telefono,
-                acceso_gestion_comercios = @AccesoGestionComercios,
-                acceso_gestion_usuarios_locales = @AccesoGestionUsuariosLocales,
-                acceso_gestion_usuarios_allva = @AccesoGestionUsuariosAllva,
-                acceso_analytics = @AccesoAnalytics,
-                activo = @Activo,
-                fecha_modificacion = @FechaModificacion";
-
-        var query = queryBase;
-        if (!string.IsNullOrWhiteSpace(FormPassword))
+        try
         {
-            query += ", password_hash = @PasswordHash";
+            var queryBase = @"
+                UPDATE administradores_allva SET
+                    nombre = @Nombre,
+                    apellidos = @Apellidos,
+                    correo = @Correo,
+                    telefono = @Telefono,
+                    nivel_acceso = @NivelAcceso,
+                    activo = @Activo,
+                    fecha_modificacion = @FechaModificacion,
+                    acceso_gestion_comercios = @AccesoGestionComercios,
+                    acceso_gestion_usuarios_locales = @AccesoGestionUsuariosLocales,
+                    acceso_gestion_usuarios_allva = @AccesoGestionUsuariosAllva,
+                    acceso_analytics = @AccesoAnalytics";
+
+            var query = queryBase;
+            if (!string.IsNullOrWhiteSpace(FormPassword))
+            {
+                query += ", password_hash = @PasswordHash";
+            }
+
+            query += " WHERE id_administrador = @IdAdministrador";
+
+            using var cmd = new NpgsqlCommand(query, connection, transaction);
+            cmd.Parameters.AddWithValue("@Nombre", FormNombre);
+            cmd.Parameters.AddWithValue("@Apellidos", FormApellidos);
+            cmd.Parameters.AddWithValue("@Correo", FormCorreo);
+            cmd.Parameters.AddWithValue("@Telefono", 
+                string.IsNullOrWhiteSpace(FormTelefono) ? DBNull.Value : FormTelefono);
+            cmd.Parameters.AddWithValue("@NivelAcceso", FormNivelAcceso);
+            cmd.Parameters.AddWithValue("@Activo", FormActivo);
+            cmd.Parameters.AddWithValue("@FechaModificacion", DateTime.Now);
+            cmd.Parameters.AddWithValue("@IdAdministrador", _administradorEnEdicion.IdAdministrador);
+
+            var (comercios, usuarios, admins, analytics) = CalcularPermisosLegacy(FormNivelAcceso);
+            cmd.Parameters.AddWithValue("@AccesoGestionComercios", comercios);
+            cmd.Parameters.AddWithValue("@AccesoGestionUsuariosLocales", usuarios);
+            cmd.Parameters.AddWithValue("@AccesoGestionUsuariosAllva", admins);
+            cmd.Parameters.AddWithValue("@AccesoAnalytics", analytics);
+
+            if (!string.IsNullOrWhiteSpace(FormPassword))
+            {
+                var passwordHash = BCrypt.Net.BCrypt.HashPassword(FormPassword);
+                cmd.Parameters.AddWithValue("@PasswordHash", passwordHash);
+            }
+
+            await cmd.ExecuteNonQueryAsync();
+
+            if (FormNivelAcceso < 3)
+            {
+                var deleteQuery = "DELETE FROM admin_modulos_habilitados WHERE id_administrador = @IdAdmin";
+                using var deleteCmd = new NpgsqlCommand(deleteQuery, connection, transaction);
+                deleteCmd.Parameters.AddWithValue("@IdAdmin", _administradorEnEdicion.IdAdministrador);
+                await deleteCmd.ExecuteNonQueryAsync();
+
+                await GuardarModulosHabilitados(_administradorEnEdicion.IdAdministrador, connection, transaction);
+            }
+
+            await transaction.CommitAsync();
         }
-
-        query += " WHERE id_administrador = @IdAdministrador";
-
-        using var cmd = new NpgsqlCommand(query, connection);
-        cmd.Parameters.AddWithValue("@Nombre", FormNombre);
-        cmd.Parameters.AddWithValue("@Apellidos", FormApellidos);
-        cmd.Parameters.AddWithValue("@Correo", FormCorreo);
-        cmd.Parameters.AddWithValue("@Telefono", 
-            string.IsNullOrWhiteSpace(FormTelefono) ? DBNull.Value : FormTelefono);
-        cmd.Parameters.AddWithValue("@AccesoGestionComercios", FormAccesoGestionComercios);
-        cmd.Parameters.AddWithValue("@AccesoGestionUsuariosLocales", FormAccesoGestionUsuariosLocales);
-        cmd.Parameters.AddWithValue("@AccesoGestionUsuariosAllva", FormAccesoGestionUsuariosAllva);
-        cmd.Parameters.AddWithValue("@AccesoAnalytics", FormAccesoAnalytics);
-        cmd.Parameters.AddWithValue("@Activo", FormActivo);
-        cmd.Parameters.AddWithValue("@FechaModificacion", DateTime.Now);
-        cmd.Parameters.AddWithValue("@IdAdministrador", _administradorEnEdicion.IdAdministrador);
-
-        if (!string.IsNullOrWhiteSpace(FormPassword))
+        catch
         {
-            var passwordHash = BCrypt.Net.BCrypt.HashPassword(FormPassword);
-            cmd.Parameters.AddWithValue("@PasswordHash", passwordHash);
+            await transaction.RollbackAsync();
+            throw;
         }
+    }
 
-        await cmd.ExecuteNonQueryAsync();
+    private async Task GuardarModulosHabilitados(int idAdmin, NpgsqlConnection connection, NpgsqlTransaction transaction)
+    {
+        var modulosSeleccionados = FormModulosSeleccionables.Where(m => m.Seleccionado).ToList();
+
+        foreach (var modulo in modulosSeleccionados)
+        {
+            var query = @"
+                INSERT INTO admin_modulos_habilitados (id_administrador, nombre_modulo, fecha_asignacion)
+                VALUES (@IdAdmin, @NombreModulo, @Fecha)
+                ON CONFLICT (id_administrador, nombre_modulo) DO NOTHING";
+
+            using var cmd = new NpgsqlCommand(query, connection, transaction);
+            cmd.Parameters.AddWithValue("@IdAdmin", idAdmin);
+            cmd.Parameters.AddWithValue("@NombreModulo", modulo.Codigo);
+            cmd.Parameters.AddWithValue("@Fecha", DateTime.Now);
+
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 
     [RelayCommand]
@@ -402,17 +591,16 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
             await cmd.ExecuteNonQueryAsync();
 
             admin.Activo = nuevoEstado;
-
             ActualizarEstadisticas();
 
-            MensajeExito = $"✓ Estado actualizado: {(nuevoEstado ? "Activo" : "Inactivo")}";
+            MensajeExito = $"Estado cambiado a: {(nuevoEstado ? "Activo" : "Bloqueado")}";
             MostrarMensajeExito = true;
             await Task.Delay(2000);
             MostrarMensajeExito = false;
         }
         catch (Exception ex)
         {
-            MensajeExito = $"❌ Error al cambiar estado: {ex.Message}";
+            MensajeExito = $"Error: {ex.Message}";
             MostrarMensajeExito = true;
             await Task.Delay(3000);
             MostrarMensajeExito = false;
@@ -420,34 +608,138 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task EliminarAdministrador(AdministradorAllvaModel admin)
+    {
+        Cargando = true;
+
+        try
+        {
+            using var connection = new NpgsqlConnection(ConnectionString);
+            await connection.OpenAsync();
+            using var transaction = await connection.BeginTransactionAsync();
+
+            try
+            {
+                // Eliminar módulos habilitados primero (clave foránea)
+                var deleteModulosQuery = "DELETE FROM admin_modulos_habilitados WHERE id_administrador = @Id";
+                using var deleteModulosCmd = new NpgsqlCommand(deleteModulosQuery, connection, transaction);
+                deleteModulosCmd.Parameters.AddWithValue("@Id", admin.IdAdministrador);
+                await deleteModulosCmd.ExecuteNonQueryAsync();
+
+                // Eliminar administrador
+                var deleteAdminQuery = "DELETE FROM administradores_allva WHERE id_administrador = @Id";
+                using var deleteAdminCmd = new NpgsqlCommand(deleteAdminQuery, connection, transaction);
+                deleteAdminCmd.Parameters.AddWithValue("@Id", admin.IdAdministrador);
+                await deleteAdminCmd.ExecuteNonQueryAsync();
+
+                await transaction.CommitAsync();
+
+                await CargarAdministradores();
+
+                MensajeExito = "Administrador eliminado correctamente";
+                MostrarMensajeExito = true;
+                await Task.Delay(3000);
+                MostrarMensajeExito = false;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            MensajeExito = $"Error al eliminar: {ex.Message}";
+            MostrarMensajeExito = true;
+            await Task.Delay(5000);
+            MostrarMensajeExito = false;
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    [RelayCommand]
     private void AplicarFiltros()
     {
-        var filtrados = Administradores.AsEnumerable();
-
-        if (!string.IsNullOrWhiteSpace(FiltroBusqueda))
+        try
         {
-            filtrados = filtrados.Where(a =>
-                a.NombreCompleto.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase) ||
-                a.NombreUsuario.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase) ||
-                a.Correo.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase));
-        }
+            var filtrados = Administradores.AsEnumerable();
 
-        if (!string.IsNullOrEmpty(FiltroEstado) && FiltroEstado != "Todos")
+            // Filtro por nombre (nombre completo, usuario o correo)
+            if (!string.IsNullOrWhiteSpace(FiltroBusqueda))
+            {
+                var busqueda = FiltroBusqueda.Trim();
+                filtrados = filtrados.Where(a =>
+                    (a.NombreCompleto?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (a.NombreUsuario?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (a.Correo?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ?? false));
+            }
+
+            // Filtro por nivel de acceso
+            if (FiltroNivelSeleccionado > 0) // Si no es "Todos"
+            {
+                var nivel = FiltroNivelSeleccionado; // 1, 2, 3 o 4
+                filtrados = filtrados.Where(a => a.NivelAcceso == nivel);
+            }
+
+            // Filtro por estado
+            if (FiltroEstadoSeleccionado == 1) // Activo
+            {
+                filtrados = filtrados.Where(a => a.Activo);
+            }
+            else if (FiltroEstadoSeleccionado == 2) // Inactivo
+            {
+                filtrados = filtrados.Where(a => !a.Activo);
+            }
+            // Si es 0 (Todos), no filtra
+
+            AdministradoresFiltrados.Clear();
+            foreach (var admin in filtrados.OrderBy(a => a.NombreCompleto))
+            {
+                AdministradoresFiltrados.Add(admin);
+            }
+        }
+        catch (Exception ex)
         {
-            var activo = FiltroEstado == "Activo";
-            filtrados = filtrados.Where(a => a.Activo == activo);
+            Console.WriteLine($"Error al aplicar filtros: {ex.Message}");
+            
+            // Recargar todos sin filtros
+            AdministradoresFiltrados.Clear();
+            foreach (var admin in Administradores.OrderBy(a => a.NombreCompleto))
+            {
+                AdministradoresFiltrados.Add(admin);
+            }
         }
+    }
 
-        if (!string.IsNullOrEmpty(FiltroTipo) && FiltroTipo != "Todos")
-        {
-            var esSuperAdmin = FiltroTipo == "Super Admin";
-            filtrados = filtrados.Where(a => a.EsSuperAdministrador == esSuperAdmin);
-        }
-
+    [RelayCommand]
+    private void LimpiarFiltros()
+    {
+        FiltroBusqueda = string.Empty;
+        FiltroNivelSeleccionado = 0;
+        FiltroEstadoSeleccionado = 0;
+        
+        // Recargar todos los administradores sin filtros
         AdministradoresFiltrados.Clear();
-        foreach (var admin in filtrados.OrderBy(a => a.NombreCompleto))
+        foreach (var admin in Administradores.OrderBy(a => a.NombreCompleto))
         {
             AdministradoresFiltrados.Add(admin);
+        }
+    }
+
+    private void InicializarModulosSeleccionables()
+    {
+        FormModulosSeleccionables.Clear();
+        foreach (var modulo in ModulosDisponibles)
+        {
+            FormModulosSeleccionables.Add(new ModuloCheckbox
+            {
+                Codigo = modulo.Codigo,
+                Nombre = modulo.Nombre,
+                Seleccionado = false
+            });
         }
     }
 
@@ -460,12 +752,15 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
         FormTelefono = string.Empty;
         FormPassword = string.Empty;
         FormActivo = true;
-        FormAccesoGestionComercios = true;
-        FormAccesoGestionUsuariosLocales = true;
-        FormAccesoGestionUsuariosAllva = false;
-        FormAccesoAnalytics = false;
+        FormNivelAcceso = 1;
+        
+        foreach (var modulo in FormModulosSeleccionables)
+        {
+            modulo.Seleccionado = false;
+        }
 
         _administradorEnEdicion = null;
+        ActualizarDescripcionNivel();
     }
 
     private string GenerarNombreUsuario()
@@ -484,6 +779,38 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
         }
 
         return nombreUsuario;
+    }
+
+    private void ActualizarDescripcionNivel()
+    {
+        FormDescripcionNivel = FormNivelAcceso switch
+        {
+            1 => "Puede ver y editar pestañas de un módulo concreto (Balance, Operaciones o Informes).",
+            2 => "Puede ver y editar módulos concretos, dar altas y editar comercios o usuarios del módulo asignado.",
+            3 => "Puede ver y editar todos los módulos excepto crear usuarios de Allva.",
+            4 => "Acceso total: puede crear, editar y aprobar nuevos usuarios Allva y gestionar niveles de acceso.",
+            _ => ""
+        };
+
+        if (FormNivelAcceso >= 3)
+        {
+            foreach (var modulo in FormModulosSeleccionables)
+            {
+                modulo.Seleccionado = true;
+            }
+        }
+    }
+
+    private (bool comercios, bool usuarios, bool admins, bool analytics) CalcularPermisosLegacy(int nivel)
+    {
+        return nivel switch
+        {
+            1 => (false, false, false, false),
+            2 => (true, true, false, false),
+            3 => (true, true, false, true),
+            4 => (true, true, true, true),
+            _ => (false, false, false, false)
+        };
     }
 
     private bool ValidarFormulario(out string mensajeError)
@@ -516,7 +843,7 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
 
         if (!ModoEdicion && string.IsNullOrWhiteSpace(FormPassword))
         {
-            mensajeError = "La contraseña es obligatoria para nuevos administradores";
+            mensajeError = "La contraseña es obligatoria";
             return false;
         }
 
@@ -526,12 +853,9 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
             return false;
         }
 
-        if (!FormAccesoGestionComercios && 
-            !FormAccesoGestionUsuariosLocales && 
-            !FormAccesoGestionUsuariosAllva && 
-            !FormAccesoAnalytics)
+        if (FormNivelAcceso < 3 && !FormModulosSeleccionables.Any(m => m.Seleccionado))
         {
-            mensajeError = "Debe asignar al menos un permiso al administrador";
+            mensajeError = "Debe seleccionar al menos un módulo";
             return false;
         }
 
@@ -558,4 +882,25 @@ public partial class ManageAdministradoresAllvaViewModel : ObservableObject
             FormNombreUsuario = GenerarNombreUsuario();
         }
     }
+
+    partial void OnFormNivelAccesoChanged(int value)
+    {
+        ActualizarDescripcionNivel();
+        OnPropertyChanged(nameof(FormNivelAccesoIndex));
+    }
+}
+
+public class ModuloDisponible
+{
+    public string Codigo { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+}
+
+public partial class ModuloCheckbox : ObservableObject
+{
+    public string Codigo { get; set; } = string.Empty;
+    public string Nombre { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    private bool _seleccionado;
 }

@@ -168,7 +168,7 @@
                         <TextBlock Text="TOTAL FLOOTERS" 
                                    FontSize="14" FontWeight="Bold" 
                                    Foreground="#666" LetterSpacing="0.5"/>
-                        <TextBlock Text="{Binding UsuariosFlotantes}" 
+                        <TextBlock Text="{Binding UsuariosFlooters}" 
                                    FontSize="42" FontWeight="Bold" 
                                    Foreground="#FFC600"/>
                     </StackPanel>
@@ -269,14 +269,21 @@
                                     </ComboBox>
                                 </StackPanel>
 
-                                <Button Grid.Row="1" Grid.Column="2"
-                                        Classes="btn-primary"
-                                        Command="{Binding AplicarFiltrosCommand}"
-                                        VerticalAlignment="Bottom"
-                                        HorizontalAlignment="Stretch"
-                                        Margin="8,8,0,0">
-                                    <TextBlock Text="BUSCAR" FontSize="16"/>
-                                </Button>
+                                <!-- Botones de Buscar y Limpiar -->
+                                <StackPanel Grid.Row="1" Grid.Column="2" Margin="8,8,0,0" Orientation="Horizontal" Spacing="8">
+                                    <Button Classes="btn-primary"
+                                            Command="{Binding AplicarFiltrosCommand}"
+                                            HorizontalAlignment="Stretch"
+                                            Width="155">
+                                        <TextBlock Text="BUSCAR" FontSize="16"/>
+                                    </Button>
+                                    <Button Classes="btn-secondary"
+                                            Command="{Binding LimpiarFiltrosCommand}"
+                                            HorizontalAlignment="Stretch"
+                                            Width="155">
+                                        <TextBlock Text="LIMPIAR" FontSize="16"/>
+                                    </Button>
+                                </StackPanel>
                             </Grid>
                         </StackPanel>
                     </Border>
@@ -329,7 +336,7 @@
                                             <StackPanel Grid.Column="2" Spacing="6">
                                                 <TextBlock Text="Tipo de usuario" 
                                                            FontSize="14" Foreground="#666"/>
-                                                <TextBlock Text="{Binding TipoUsuario}" 
+                                                <TextBlock Text="{Binding TipoUsuarioDisplay}" 
                                                            FontSize="16" FontWeight="SemiBold"
                                                            Foreground="#333"/>
                                             </StackPanel>
@@ -518,7 +525,7 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <!-- Contraseña (MODIFICADO - SIN MODAL) -->
+                                    <!-- Contraseña -->
                                     <StackPanel>
                                         <TextBlock Text="Contraseña *" 
                                                    FontSize="15" FontWeight="SemiBold" 
@@ -789,7 +796,7 @@
                                             <TextBlock Grid.Column="0" Text="Tipo:" 
                                                        FontWeight="SemiBold" FontSize="15"/>
                                             <TextBlock Grid.Column="1" 
-                                                       Text="{Binding UsuarioSeleccionado.TipoUsuario}" 
+                                                       Text="{Binding UsuarioSeleccionado.TipoUsuarioDisplay}" 
                                                        FontSize="15"/>
                                         </Grid>
                                         
