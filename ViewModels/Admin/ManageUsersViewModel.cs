@@ -6,15 +6,16 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Allva.Desktop.Models;
-using Allva.Desktop.Models.Admin;
 using Npgsql;
 using BCrypt.Net;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 
 namespace Allva.Desktop.ViewModels.Admin;
 
 /// <summary>
 /// ViewModel para la gestión de usuarios normales y flotantes
-/// VERSIÓN CORREGIDA - Sin observaciones, usando estructura real de BD
+/// VERSIÓN ADAPTADA A MODELOS EXISTENTES
 /// </summary>
 public partial class ManageUsersViewModel : ObservableObject
 {
@@ -46,6 +47,9 @@ public partial class ManageUsersViewModel : ObservableObject
     [ObservableProperty]
     private string _mensajeExito = string.Empty;
 
+    [ObservableProperty]
+    private string _mensajeExitoColor = "#28a745";
+
     // ============================================
     // PROPIEDADES PARA PANEL DERECHO
     // ============================================
@@ -63,7 +67,7 @@ public partial class ManageUsersViewModel : ObservableObject
     private bool _modoEdicion;
 
     [ObservableProperty]
-    private string _tituloFormulario = "Crear Usuario";
+    private string _botonGuardarTexto = "CREAR USUARIO";
 
     // ============================================
     // CAMPOS DEL FORMULARIO
@@ -88,10 +92,10 @@ public partial class ManageUsersViewModel : ObservableObject
     private string _formPassword = string.Empty;
 
     [ObservableProperty]
-    private bool _formEsFlotante;
+    private bool _formActivo = true;
 
     [ObservableProperty]
-    private bool _formActivo = true;
+    private string _tipoEmpleadoTexto = "REGULAR (1 local asignado)";
 
     // ============================================
     // PROPIEDADES PARA FILTROS
@@ -123,7 +127,7 @@ public partial class ManageUsersViewModel : ObservableObject
     // ============================================
 
     [ObservableProperty]
-    private string _busquedaLocal = string.Empty;
+    private string _busquedaComercio = string.Empty;
 
     [ObservableProperty]
     private bool _mostrarResultadosBusqueda;
@@ -133,6 +137,16 @@ public partial class ManageUsersViewModel : ObservableObject
 
     [ObservableProperty]
     private ObservableCollection<LocalFormModel> _localesAsignados = new();
+
+    // ============================================
+    // MODAL DE CONTRASEÑA
+    // ============================================
+
+    [ObservableProperty]
+    private bool _mostrarModalPassword;
+
+    [ObservableProperty]
+    private string _passwordGenerada = string.Empty;
 
     // ============================================
     // ESTADÍSTICAS
@@ -153,6 +167,75 @@ public partial class ManageUsersViewModel : ObservableObject
     public ManageUsersViewModel()
     {
         _ = CargarDatosDesdeBaseDatos();
+    }
+
+    // ============================================
+    // OBSERVADORES DE CAMBIOS - AUTO-GENERACIÓN
+    // ============================================
+
+    partial void OnFormNombreChanged(string value)
+    {
+        ActualizarNumeroUsuarioAutomaticamente();
+    }
+
+    partial void OnFormApellidosChanged(string value)
+    {
+        ActualizarNumeroUsuarioAutomaticamente();
+    }
+
+    partial void OnLocalesAsignadosChanged(ObservableCollection<LocalFormModel> value)
+    {
+        ActualizarTipoEmpleado();
+    }
+
+    private void ActualizarNumeroUsuarioAutomaticamente()
+    {
+        if (ModoEdicion)
+        {
+            // No regenerar en modo edición
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(FormNombre) || string.IsNullOrWhiteSpace(FormApellidos))
+        {
+            FormNumeroUsuario = string.Empty;
+            return;
+        }
+
+        // Generar número base en mayúsculas
+        var nombre = FormNombre.Trim().ToUpper().Replace(" ", "");
+        var apellido = FormApellidos.Trim().ToUpper().Replace(" ", "");
+        var baseNumero = $"{nombre}_{apellido}";
+
+        // Verificar duplicados en tiempo real
+        var numero = baseNumero;
+        var contador = 2;
+
+        while (Usuarios.Any(u => u.NumeroUsuario.Equals(numero, StringComparison.OrdinalIgnoreCase)))
+        {
+            numero = $"{baseNumero}_{contador:D2}";
+            contador++;
+        }
+
+        FormNumeroUsuario = numero;
+    }
+
+    private void ActualizarTipoEmpleado()
+    {
+        var cantidadLocales = LocalesAsignados.Count;
+        
+        if (cantidadLocales == 0)
+        {
+            TipoEmpleadoTexto = "Sin locales asignados";
+        }
+        else if (cantidadLocales == 1)
+        {
+            TipoEmpleadoTexto = "REGULAR (1 local asignado)";
+        }
+        else
+        {
+            TipoEmpleadoTexto = $"FLOOTER ({cantidadLocales} locales asignados)";
+        }
     }
 
     // ============================================
@@ -187,10 +270,7 @@ public partial class ManageUsersViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            MensajeExito = $"Error al cargar datos: {ex.Message}";
-            MostrarMensajeExito = true;
-            await Task.Delay(3000);
-            MostrarMensajeExito = false;
+            MostrarMensajeError($"Error al cargar datos: {ex.Message}");
         }
         finally
         {
@@ -202,16 +282,20 @@ public partial class ManageUsersViewModel : ObservableObject
     {
         var usuarios = new List<UserModel>();
 
-        // Columnas reales: id_usuario, id_comercio, id_local, id_rol, nombre, apellidos, 
-        // correo, telefono, numero_usuario, password_hash, es_flotante, idioma, activo,
-        // primer_login, ultimo_acceso, intentos_fallidos, bloqueado_hasta, fecha_creacion, fecha_modificacion
+        // Mostrar TODOS los usuarios sin filtro de rol (excepto que explícitamente sea admin con id_rol = 1)
         var query = @"SELECT u.id_usuario, u.numero_usuario, u.nombre, u.apellidos,
-                             u.correo, u.telefono, u.es_flotante, u.activo, u.ultimo_acceso,
-                             l.id_local, l.nombre_local, l.codigo_local,
-                             c.id_comercio, c.nombre_comercio
+                             u.correo, COALESCE(u.telefono, '') as telefono, 
+                             COALESCE(u.es_flooter, false) as es_flotante,
+                             u.activo, u.ultimo_acceso,
+                             COALESCE(l.id_local, 0) as id_local, 
+                             COALESCE(l.nombre_local, 'Sin asignar') as nombre_local, 
+                             COALESCE(l.codigo_local, 'N/A') as codigo_local,
+                             COALESCE(c.id_comercio, 0) as id_comercio, 
+                             COALESCE(c.nombre_comercio, 'Sin asignar') as nombre_comercio
                       FROM usuarios u
                       LEFT JOIN locales l ON u.id_local = l.id_local
                       LEFT JOIN comercios c ON l.id_comercio = c.id_comercio
+                      WHERE (u.id_rol IS NULL OR u.id_rol != 1)
                       ORDER BY u.nombre, u.apellidos";
 
         using var cmd = new NpgsqlCommand(query, connection);
@@ -226,15 +310,15 @@ public partial class ManageUsersViewModel : ObservableObject
                 Nombre = reader.GetString(2),
                 Apellidos = reader.GetString(3),
                 Correo = reader.GetString(4),
-                Telefono = reader.IsDBNull(5) ? null : reader.GetString(5),
+                Telefono = reader.GetString(5),
                 EsFlotante = reader.GetBoolean(6),
                 Activo = reader.GetBoolean(7),
                 UltimoAcceso = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
-                IdLocal = reader.IsDBNull(9) ? 0 : reader.GetInt32(9),
-                NombreLocal = reader.IsDBNull(10) ? "Sin asignar" : reader.GetString(10),
-                CodigoLocal = reader.IsDBNull(11) ? string.Empty : reader.GetString(11),
-                IdComercio = reader.IsDBNull(12) ? 0 : reader.GetInt32(12),
-                NombreComercio = reader.IsDBNull(13) ? "Sin asignar" : reader.GetString(13)
+                IdLocal = reader.GetInt32(9),
+                NombreLocal = reader.GetString(10),
+                CodigoLocal = reader.GetString(11),
+                IdComercio = reader.GetInt32(12),
+                NombreComercio = reader.GetString(13)
             });
         }
 
@@ -250,8 +334,8 @@ public partial class ManageUsersViewModel : ObservableObject
     {
         LimpiarFormulario();
         ModoEdicion = false;
-        TituloFormulario = "Crear Nuevo Usuario";
         TituloPanelDerecho = "Crear Nuevo Usuario";
+        BotonGuardarTexto = "CREAR USUARIO";
         MostrarFormulario = true;
         MostrarPanelDerecho = true;
     }
@@ -266,8 +350,7 @@ public partial class ManageUsersViewModel : ObservableObject
         FormApellidos = usuario.Apellidos;
         FormNumeroUsuario = usuario.NumeroUsuario;
         FormCorreo = usuario.Correo;
-        FormTelefono = usuario.Telefono ?? string.Empty;
-        FormEsFlotante = usuario.EsFlotante;
+        FormTelefono = usuario.Telefono == "Sin teléfono" ? string.Empty : usuario.Telefono ?? string.Empty;
         FormActivo = usuario.Activo;
         FormPassword = string.Empty;
 
@@ -275,8 +358,8 @@ public partial class ManageUsersViewModel : ObservableObject
         await CargarLocalesAsignadosUsuario(usuario.IdUsuario);
 
         ModoEdicion = true;
-        TituloFormulario = "Editar Usuario";
         TituloPanelDerecho = $"Editar: {usuario.NombreCompleto}";
+        BotonGuardarTexto = "ACTUALIZAR USUARIO";
         MostrarFormulario = true;
         MostrarPanelDerecho = true;
     }
@@ -285,11 +368,10 @@ public partial class ManageUsersViewModel : ObservableObject
     private async Task VerDetallesUsuario(UserModel usuario)
     {
         UsuarioSeleccionado = usuario;
-        TituloPanelDerecho = $"Detalles de {usuario.NombreCompleto}";
+        TituloPanelDerecho = $"Detalles: {usuario.NombreCompleto}";
         MostrarFormulario = false;
         MostrarPanelDerecho = true;
 
-        // Cargar locales asignados para vista de detalles
         await CargarLocalesAsignadosUsuario(usuario.IdUsuario);
     }
 
@@ -303,19 +385,60 @@ public partial class ManageUsersViewModel : ObservableObject
     }
 
     // ============================================
+    // COMANDOS - GENERAR Y COPIAR CONTRASEÑA
+    // ============================================
+
+    [RelayCommand]
+    private void GenerarPassword()
+    {
+        // Generar contraseña aleatoria segura
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+        var random = new Random();
+        var password = new string(Enumerable.Repeat(chars, 12)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+
+        PasswordGenerada = password;
+        FormPassword = password;
+        MostrarModalPassword = true;
+    }
+
+    [RelayCommand]
+    private async Task CopiarPassword()
+    {
+        try
+        {
+            if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+            {
+                var clipboard = desktop.MainWindow?.Clipboard;
+                if (clipboard != null)
+                {
+                    await clipboard.SetTextAsync(PasswordGenerada);
+                    MostrarMensajeExitoNotificacion("✓ Contraseña copiada al portapapeles");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MostrarMensajeError($"Error al copiar: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private void CerrarModalPassword()
+    {
+        MostrarModalPassword = false;
+    }
+
+    // ============================================
     // COMANDOS - ACCIONES CRUD
     // ============================================
 
     [RelayCommand]
     private async Task GuardarUsuario()
     {
-        // Validar formulario
         if (!ValidarFormulario(out string mensajeError))
         {
-            MensajeExito = $"⚠️ {mensajeError}";
-            MostrarMensajeExito = true;
-            await Task.Delay(4000);
-            MostrarMensajeExito = false;
+            MostrarMensajeError(mensajeError);
             return;
         }
 
@@ -326,31 +449,20 @@ public partial class ManageUsersViewModel : ObservableObject
             if (ModoEdicion && _usuarioEnEdicion != null)
             {
                 await ActualizarUsuario();
-                MensajeExito = "✓ Usuario actualizado correctamente";
+                MostrarMensajeExitoNotificacion("✓ Usuario actualizado correctamente");
             }
             else
             {
                 await CrearNuevoUsuario();
-                MensajeExito = "✓ Usuario creado correctamente";
+                MostrarMensajeExitoNotificacion("✓ Usuario creado correctamente");
             }
 
-            // Recargar datos
             await CargarDatosDesdeBaseDatos();
-
-            // Cerrar panel
             CerrarPanelDerecho();
-
-            // Mostrar mensaje de éxito
-            MostrarMensajeExito = true;
-            await Task.Delay(3000);
-            MostrarMensajeExito = false;
         }
         catch (Exception ex)
         {
-            MensajeExito = $"❌ Error al guardar: {ex.Message}";
-            MostrarMensajeExito = true;
-            await Task.Delay(5000);
-            MostrarMensajeExito = false;
+            MostrarMensajeError($"Error al guardar: {ex.Message}");
         }
         finally
         {
@@ -367,23 +479,19 @@ public partial class ManageUsersViewModel : ObservableObject
 
         try
         {
-            // 1. Hashear contraseña
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(FormPassword);
 
-            // 2. Determinar id_local principal
-            int? idLocalPrincipal = null;
-            if (!FormEsFlotante && LocalesAsignados.Any())
-            {
-                idLocalPrincipal = LocalesAsignados.First().IdLocal;
-            }
+            // Determinar si es flotante según cantidad de locales
+            bool esFlotante = LocalesAsignados.Count > 1;
 
-            // 3. Obtener id_comercio del primer local
+            int? idLocalPrincipal = LocalesAsignados.FirstOrDefault()?.IdLocal;
             int? idComercio = null;
-            if (LocalesAsignados.Any())
+
+            if (idLocalPrincipal.HasValue)
             {
                 var queryComercio = "SELECT id_comercio FROM locales WHERE id_local = @IdLocal";
                 using var cmdComercio = new NpgsqlCommand(queryComercio, connection, transaction);
-                cmdComercio.Parameters.AddWithValue("@IdLocal", LocalesAsignados.First().IdLocal);
+                cmdComercio.Parameters.AddWithValue("@IdLocal", idLocalPrincipal.Value);
                 var result = await cmdComercio.ExecuteScalarAsync();
                 if (result != null && result != DBNull.Value)
                 {
@@ -391,14 +499,11 @@ public partial class ManageUsersViewModel : ObservableObject
                 }
             }
 
-            // 4. Insertar usuario principal
-            // Campos: id_comercio, id_local, id_rol, nombre, apellidos, correo, telefono,
-            // numero_usuario, password_hash, es_flotante, idioma, activo, primer_login,
-            // fecha_creacion, fecha_modificacion
+            // CORRECCIÓN: Usar es_flooter como nombre de columna real en la BD
             var queryUsuario = @"
                 INSERT INTO usuarios (
                     id_comercio, id_local, id_rol, nombre, apellidos, correo, telefono,
-                    numero_usuario, password_hash, es_flotante, idioma, activo, primer_login,
+                    numero_usuario, password_hash, es_flooter, idioma, activo, primer_login,
                     fecha_creacion, fecha_modificacion
                 )
                 VALUES (
@@ -411,21 +516,21 @@ public partial class ManageUsersViewModel : ObservableObject
             using var cmdUsuario = new NpgsqlCommand(queryUsuario, connection, transaction);
             cmdUsuario.Parameters.AddWithValue("@IdComercio", idComercio.HasValue ? idComercio.Value : DBNull.Value);
             cmdUsuario.Parameters.AddWithValue("@IdLocal", idLocalPrincipal.HasValue ? idLocalPrincipal.Value : DBNull.Value);
-            cmdUsuario.Parameters.AddWithValue("@Nombre", FormNombre);
-            cmdUsuario.Parameters.AddWithValue("@Apellidos", FormApellidos);
-            cmdUsuario.Parameters.AddWithValue("@Correo", FormCorreo);
+            cmdUsuario.Parameters.AddWithValue("@Nombre", FormNombre.Trim().ToUpper());
+            cmdUsuario.Parameters.AddWithValue("@Apellidos", FormApellidos.Trim().ToUpper());
+            cmdUsuario.Parameters.AddWithValue("@Correo", FormCorreo.Trim());
             cmdUsuario.Parameters.AddWithValue("@Telefono",
-                string.IsNullOrWhiteSpace(FormTelefono) ? DBNull.Value : FormTelefono);
+                string.IsNullOrWhiteSpace(FormTelefono) ? DBNull.Value : FormTelefono.Trim());
             cmdUsuario.Parameters.AddWithValue("@NumeroUsuario", FormNumeroUsuario);
             cmdUsuario.Parameters.AddWithValue("@PasswordHash", passwordHash);
-            cmdUsuario.Parameters.AddWithValue("@EsFlotante", FormEsFlotante);
+            cmdUsuario.Parameters.AddWithValue("@EsFlotante", esFlotante);
             cmdUsuario.Parameters.AddWithValue("@Activo", FormActivo);
             cmdUsuario.Parameters.AddWithValue("@FechaCreacion", DateTime.Now);
             cmdUsuario.Parameters.AddWithValue("@FechaModificacion", DateTime.Now);
 
             var idUsuario = Convert.ToInt32(await cmdUsuario.ExecuteScalarAsync());
 
-            // 5. Insertar asignaciones de locales en usuario_locales (si existe esa tabla)
+            // Insertar asignaciones de locales
             foreach (var local in LocalesAsignados)
             {
                 try
@@ -443,7 +548,7 @@ public partial class ManageUsersViewModel : ObservableObject
                 }
                 catch
                 {
-                    // Tabla usuario_locales puede no existir, continuar
+                    // Tabla puede no existir
                 }
             }
 
@@ -467,20 +572,15 @@ public partial class ManageUsersViewModel : ObservableObject
 
         try
         {
-            // 1. Determinar id_local principal
-            int? idLocalPrincipal = null;
-            if (!FormEsFlotante && LocalesAsignados.Any())
-            {
-                idLocalPrincipal = LocalesAsignados.First().IdLocal;
-            }
-
-            // 2. Obtener id_comercio del primer local
+            bool esFlotante = LocalesAsignados.Count > 1;
+            int? idLocalPrincipal = LocalesAsignados.FirstOrDefault()?.IdLocal;
             int? idComercio = null;
-            if (LocalesAsignados.Any())
+
+            if (idLocalPrincipal.HasValue)
             {
                 var queryComercio = "SELECT id_comercio FROM locales WHERE id_local = @IdLocal";
                 using var cmdComercio = new NpgsqlCommand(queryComercio, connection, transaction);
-                cmdComercio.Parameters.AddWithValue("@IdLocal", LocalesAsignados.First().IdLocal);
+                cmdComercio.Parameters.AddWithValue("@IdLocal", idLocalPrincipal.Value);
                 var result = await cmdComercio.ExecuteScalarAsync();
                 if (result != null && result != DBNull.Value)
                 {
@@ -488,7 +588,7 @@ public partial class ManageUsersViewModel : ObservableObject
                 }
             }
 
-            // 3. Actualizar usuario principal
+            // CORRECCIÓN: Usar es_flooter como nombre de columna real en la BD
             var queryUsuario = @"
                 UPDATE usuarios SET
                     id_comercio = @IdComercio,
@@ -498,7 +598,7 @@ public partial class ManageUsersViewModel : ObservableObject
                     apellidos = @Apellidos,
                     correo = @Correo,
                     telefono = @Telefono,
-                    es_flotante = @EsFlotante,
+                    es_flooter = @EsFlotante,
                     activo = @Activo,
                     fecha_modificacion = @FechaModificacion" +
                     (string.IsNullOrWhiteSpace(FormPassword) ? "" : ", password_hash = @PasswordHash") + @"
@@ -508,17 +608,16 @@ public partial class ManageUsersViewModel : ObservableObject
             cmdUsuario.Parameters.AddWithValue("@IdComercio", idComercio.HasValue ? idComercio.Value : DBNull.Value);
             cmdUsuario.Parameters.AddWithValue("@IdLocal", idLocalPrincipal.HasValue ? idLocalPrincipal.Value : DBNull.Value);
             cmdUsuario.Parameters.AddWithValue("@NumeroUsuario", FormNumeroUsuario);
-            cmdUsuario.Parameters.AddWithValue("@Nombre", FormNombre);
-            cmdUsuario.Parameters.AddWithValue("@Apellidos", FormApellidos);
-            cmdUsuario.Parameters.AddWithValue("@Correo", FormCorreo);
+            cmdUsuario.Parameters.AddWithValue("@Nombre", FormNombre.Trim().ToUpper());
+            cmdUsuario.Parameters.AddWithValue("@Apellidos", FormApellidos.Trim().ToUpper());
+            cmdUsuario.Parameters.AddWithValue("@Correo", FormCorreo.Trim());
             cmdUsuario.Parameters.AddWithValue("@Telefono",
-                string.IsNullOrWhiteSpace(FormTelefono) ? DBNull.Value : FormTelefono);
-            cmdUsuario.Parameters.AddWithValue("@EsFlotante", FormEsFlotante);
+                string.IsNullOrWhiteSpace(FormTelefono) ? DBNull.Value : FormTelefono.Trim());
+            cmdUsuario.Parameters.AddWithValue("@EsFlotante", esFlotante);
             cmdUsuario.Parameters.AddWithValue("@Activo", FormActivo);
             cmdUsuario.Parameters.AddWithValue("@FechaModificacion", DateTime.Now);
             cmdUsuario.Parameters.AddWithValue("@IdUsuario", _usuarioEnEdicion.IdUsuario);
 
-            // Si se proporcionó nueva contraseña, hashearla
             if (!string.IsNullOrWhiteSpace(FormPassword))
             {
                 var passwordHash = BCrypt.Net.BCrypt.HashPassword(FormPassword);
@@ -527,16 +626,14 @@ public partial class ManageUsersViewModel : ObservableObject
 
             await cmdUsuario.ExecuteNonQueryAsync();
 
-            // 4. Actualizar asignaciones de locales (si existe la tabla)
+            // Actualizar asignaciones
             try
             {
-                // Eliminar asignaciones existentes
                 var queryDeleteAsignaciones = "DELETE FROM usuario_locales WHERE id_usuario = @IdUsuario";
                 using var cmdDelete = new NpgsqlCommand(queryDeleteAsignaciones, connection, transaction);
                 cmdDelete.Parameters.AddWithValue("@IdUsuario", _usuarioEnEdicion.IdUsuario);
                 await cmdDelete.ExecuteNonQueryAsync();
 
-                // Insertar nuevas asignaciones
                 foreach (var local in LocalesAsignados)
                 {
                     var queryAsignacion = @"
@@ -553,7 +650,7 @@ public partial class ManageUsersViewModel : ObservableObject
             }
             catch
             {
-                // Tabla usuario_locales puede no existir
+                // Tabla puede no existir
             }
 
             await transaction.CommitAsync();
@@ -568,8 +665,6 @@ public partial class ManageUsersViewModel : ObservableObject
     [RelayCommand]
     private async Task EliminarUsuario(UserModel usuario)
     {
-        // TODO: Implementar confirmación con modal
-
         Cargando = true;
 
         try
@@ -579,7 +674,6 @@ public partial class ManageUsersViewModel : ObservableObject
 
             using var transaction = await connection.BeginTransactionAsync();
 
-            // Eliminar asignaciones de locales (si existe la tabla)
             try
             {
                 var queryDeleteAsignaciones = "DELETE FROM usuario_locales WHERE id_usuario = @Id";
@@ -592,7 +686,6 @@ public partial class ManageUsersViewModel : ObservableObject
                 // Tabla puede no existir
             }
 
-            // Eliminar usuario
             var query = "DELETE FROM usuarios WHERE id_usuario = @Id";
             using var cmd = new NpgsqlCommand(query, connection, transaction);
             cmd.Parameters.AddWithValue("@Id", usuario.IdUsuario);
@@ -600,20 +693,13 @@ public partial class ManageUsersViewModel : ObservableObject
 
             await transaction.CommitAsync();
 
-            // Recargar datos
             await CargarDatosDesdeBaseDatos();
 
-            MensajeExito = "✓ Usuario eliminado correctamente";
-            MostrarMensajeExito = true;
-            await Task.Delay(3000);
-            MostrarMensajeExito = false;
+            MostrarMensajeExitoNotificacion("✓ Usuario eliminado correctamente");
         }
         catch (Exception ex)
         {
-            MensajeExito = $"❌ Error al eliminar: {ex.Message}";
-            MostrarMensajeExito = true;
-            await Task.Delay(5000);
-            MostrarMensajeExito = false;
+            MostrarMensajeError($"Error al eliminar: {ex.Message}");
         }
         finally
         {
@@ -641,23 +727,16 @@ public partial class ManageUsersViewModel : ObservableObject
 
             await cmd.ExecuteNonQueryAsync();
 
-            // Actualizar en la lista
             usuario.Activo = nuevoEstado;
 
             OnPropertyChanged(nameof(UsuariosActivos));
             OnPropertyChanged(nameof(UsuariosInactivos));
 
-            MensajeExito = $"✓ Estado actualizado: {(nuevoEstado ? "Activo" : "Inactivo")}";
-            MostrarMensajeExito = true;
-            await Task.Delay(2000);
-            MostrarMensajeExito = false;
+            MostrarMensajeExitoNotificacion($"✓ Estado: {(nuevoEstado ? "Activo" : "Inactivo")}");
         }
         catch (Exception ex)
         {
-            MensajeExito = $"❌ Error al cambiar estado: {ex.Message}";
-            MostrarMensajeExito = true;
-            await Task.Delay(3000);
-            MostrarMensajeExito = false;
+            MostrarMensajeError($"Error al cambiar estado: {ex.Message}");
         }
     }
 
@@ -670,7 +749,6 @@ public partial class ManageUsersViewModel : ObservableObject
     {
         var filtrados = Usuarios.AsEnumerable();
 
-        // Filtro por búsqueda
         if (!string.IsNullOrWhiteSpace(FiltroBusqueda))
         {
             filtrados = filtrados.Where(u =>
@@ -679,29 +757,25 @@ public partial class ManageUsersViewModel : ObservableObject
                 u.Correo.Contains(FiltroBusqueda, StringComparison.OrdinalIgnoreCase));
         }
 
-        // Filtro por local
         if (!string.IsNullOrEmpty(FiltroLocal) && FiltroLocal != "Todos")
         {
-            filtrados = filtrados.Where(u => u.NombreLocal == FiltroLocal);
+            filtrados = filtrados.Where(u => u.CodigoLocal == FiltroLocal);
         }
 
-        // Filtro por comercio
         if (!string.IsNullOrEmpty(FiltroComercio) && FiltroComercio != "Todos")
         {
             filtrados = filtrados.Where(u => u.NombreComercio == FiltroComercio);
         }
 
-        // Filtro por estado
         if (!string.IsNullOrEmpty(FiltroEstado) && FiltroEstado != "Todos")
         {
             var activo = FiltroEstado == "Activo";
             filtrados = filtrados.Where(u => u.Activo == activo);
         }
 
-        // Filtro por tipo de usuario
         if (!string.IsNullOrEmpty(FiltroTipoUsuario) && FiltroTipoUsuario != "Todos")
         {
-            var esFlotante = FiltroTipoUsuario == "Flotante";
+            var esFlotante = FiltroTipoUsuario == "Flooter";
             filtrados = filtrados.Where(u => u.EsFlotante == esFlotante);
         }
 
@@ -717,11 +791,11 @@ public partial class ManageUsersViewModel : ObservableObject
     // ============================================
 
     [RelayCommand]
-    private async Task BuscarLocal()
+    private async Task BuscarLocalesPorComercio()
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(BusquedaLocal))
+            if (string.IsNullOrWhiteSpace(BusquedaComercio))
             {
                 MostrarResultadosBusqueda = false;
                 return;
@@ -730,15 +804,28 @@ public partial class ManageUsersViewModel : ObservableObject
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            var query = @"SELECT id_local, codigo_local, nombre_local, direccion
-                         FROM locales
-                         WHERE LOWER(codigo_local) LIKE LOWER(@Busqueda)
-                            OR LOWER(nombre_local) LIKE LOWER(@Busqueda)
-                         ORDER BY nombre_local
-                         LIMIT 10";
+            // ✅ CORRECCIÓN: Usar nombres de columna correctos según tu base de datos
+            var query = @"SELECT l.id_local, 
+                                l.codigo_local, 
+                                COALESCE(l.nombre_local, '') as nombre_local, 
+                                COALESCE(l.tipo_via, '') as tipo_via, 
+                                COALESCE(l.direccion, '') as direccion, 
+                                COALESCE(l.local_numero, '') as local_numero, 
+                                COALESCE(l.escalera, '') as escalera, 
+                                COALESCE(l.piso, '') as piso,
+                                COALESCE(l.codigo_postal, '') as codigo_postal, 
+                                COALESCE(l.pais, '') as pais, 
+                                COALESCE(l.telefono, '') as telefono, 
+                                COALESCE(l.email, '') as email,
+                                c.id_comercio, 
+                                c.nombre_comercio
+                        FROM locales l
+                        INNER JOIN comercios c ON l.id_comercio = c.id_comercio
+                        WHERE LOWER(c.nombre_comercio) LIKE LOWER(@Busqueda)
+                        ORDER BY l.codigo_local";
 
             using var cmd = new NpgsqlCommand(query, connection);
-            cmd.Parameters.AddWithValue("@Busqueda", $"%{BusquedaLocal}%");
+            cmd.Parameters.AddWithValue("@Busqueda", $"%{BusquedaComercio}%");
 
             ResultadosBusquedaLocales.Clear();
 
@@ -750,18 +837,29 @@ public partial class ManageUsersViewModel : ObservableObject
                     IdLocal = reader.GetInt32(0),
                     CodigoLocal = reader.GetString(1),
                     NombreLocal = reader.GetString(2),
-                    Direccion = reader.GetString(3)
+                    TipoVia = reader.GetString(3),
+                    Direccion = reader.GetString(4),
+                    LocalNumero = reader.GetString(5),
+                    Escalera = string.IsNullOrEmpty(reader.GetString(6)) ? null : reader.GetString(6),
+                    Piso = string.IsNullOrEmpty(reader.GetString(7)) ? null : reader.GetString(7),
+                    CodigoPostal = reader.GetString(8),
+                    Pais = reader.GetString(9),
+                    Telefono = string.IsNullOrEmpty(reader.GetString(10)) ? null : reader.GetString(10),
+                    Email = string.IsNullOrEmpty(reader.GetString(11)) ? null : reader.GetString(11),
+                    IdComercio = reader.GetInt32(12)
                 });
             }
 
             MostrarResultadosBusqueda = ResultadosBusquedaLocales.Count > 0;
+            
+            if (ResultadosBusquedaLocales.Count == 0)
+            {
+                MostrarMensajeError("No se encontraron locales para ese comercio");
+            }
         }
         catch (Exception ex)
         {
-            MensajeExito = $"❌ Error al buscar locales: {ex.Message}";
-            MostrarMensajeExito = true;
-            await Task.Delay(3000);
-            MostrarMensajeExito = false;
+            MostrarMensajeError($"Error al buscar locales: {ex.Message}");
         }
     }
 
@@ -771,15 +869,10 @@ public partial class ManageUsersViewModel : ObservableObject
         if (!LocalesAsignados.Any(l => l.IdLocal == local.IdLocal))
         {
             LocalesAsignados.Add(local);
-            
-            // Si se asignan múltiples locales, marcar como flotante
-            if (LocalesAsignados.Count > 1)
-            {
-                FormEsFlotante = true;
-            }
+            ActualizarTipoEmpleado();
         }
 
-        BusquedaLocal = string.Empty;
+        BusquedaComercio = string.Empty;
         MostrarResultadosBusqueda = false;
         ResultadosBusquedaLocales.Clear();
     }
@@ -788,16 +881,11 @@ public partial class ManageUsersViewModel : ObservableObject
     private void QuitarLocalAsignado(LocalFormModel local)
     {
         LocalesAsignados.Remove(local);
-        
-        // Si queda solo un local, desmarcar flotante
-        if (LocalesAsignados.Count <= 1)
-        {
-            FormEsFlotante = false;
-        }
+        ActualizarTipoEmpleado();
     }
 
     // ============================================
-    // MÉTODOS AUXILIARES - FORMULARIO
+    // MÉTODOS AUXILIARES
     // ============================================
 
     private void LimpiarFormulario()
@@ -808,70 +896,45 @@ public partial class ManageUsersViewModel : ObservableObject
         FormCorreo = string.Empty;
         FormTelefono = string.Empty;
         FormPassword = string.Empty;
-        FormEsFlotante = false;
         FormActivo = true;
 
         LocalesAsignados.Clear();
         ResultadosBusquedaLocales.Clear();
-        BusquedaLocal = string.Empty;
+        BusquedaComercio = string.Empty;
         MostrarResultadosBusqueda = false;
+        TipoEmpleadoTexto = "REGULAR (1 local asignado)";
 
         _usuarioEnEdicion = null;
-    }
-
-    private string GenerarNumeroUsuario()
-    {
-        // Generar número de usuario: NOMBRE_APELLIDO en mayúsculas
-        var nombre = FormNombre.Trim().ToUpper().Replace(" ", "");
-        var apellido = FormApellidos.Trim().ToUpper().Replace(" ", "");
-        var baseNumero = $"{nombre}_{apellido}";
-
-        // Verificar si existe en la base de datos
-        var numero = baseNumero;
-        var contador = 2;
-
-        while (Usuarios.Any(u => u.NumeroUsuario == numero))
-        {
-            numero = $"{baseNumero}_{contador:D2}";
-            contador++;
-        }
-
-        return numero;
     }
 
     private bool ValidarFormulario(out string mensajeError)
     {
         mensajeError = string.Empty;
 
-        // Validar nombre
         if (string.IsNullOrWhiteSpace(FormNombre))
         {
             mensajeError = "El nombre es obligatorio";
             return false;
         }
 
-        // Validar apellidos
         if (string.IsNullOrWhiteSpace(FormApellidos))
         {
             mensajeError = "Los apellidos son obligatorios";
             return false;
         }
 
-        // Validar email
         if (string.IsNullOrWhiteSpace(FormCorreo))
         {
             mensajeError = "El correo electrónico es obligatorio";
             return false;
         }
 
-        // Validar formato de email
         if (!FormCorreo.Contains("@") || !FormCorreo.Contains("."))
         {
             mensajeError = "El formato del correo no es válido";
             return false;
         }
 
-        // Validar contraseña (solo al crear)
         if (!ModoEdicion && string.IsNullOrWhiteSpace(FormPassword))
         {
             mensajeError = "La contraseña es obligatoria para nuevos usuarios";
@@ -884,25 +947,14 @@ public partial class ManageUsersViewModel : ObservableObject
             return false;
         }
 
-        // Validar que tenga al menos un local asignado
         if (!LocalesAsignados.Any())
         {
             mensajeError = "Debes asignar al menos un local al usuario";
             return false;
         }
 
-        // Generar número de usuario automáticamente
-        if (string.IsNullOrWhiteSpace(FormNumeroUsuario))
-        {
-            FormNumeroUsuario = GenerarNumeroUsuario();
-        }
-
         return true;
     }
-
-    // ============================================
-    // MÉTODOS AUXILIARES - CARGA DE DATOS
-    // ============================================
 
     private async Task CargarLocalesAsignadosUsuario(int idUsuario)
     {
@@ -911,12 +963,25 @@ public partial class ManageUsersViewModel : ObservableObject
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            // Intentar cargar desde usuario_locales
-            var query = @"SELECT l.id_local, l.codigo_local, l.nombre_local, l.direccion
-                         FROM locales l
-                         INNER JOIN usuario_locales ul ON l.id_local = ul.id_local
-                         WHERE ul.id_usuario = @IdUsuario
-                         ORDER BY ul.es_principal DESC, l.nombre_local";
+            // ✅ CORRECCIÓN: Usar local_numero en lugar de numero
+            var query = @"SELECT l.id_local, 
+                                l.codigo_local, 
+                                COALESCE(l.nombre_local, '') as nombre_local,
+                                COALESCE(l.tipo_via, '') as tipo_via, 
+                                COALESCE(l.direccion, '') as direccion, 
+                                COALESCE(l.local_numero, '') as local_numero, 
+                                COALESCE(l.escalera, '') as escalera, 
+                                COALESCE(l.piso, '') as piso,
+                                COALESCE(l.codigo_postal, '') as codigo_postal, 
+                                COALESCE(l.pais, '') as pais, 
+                                COALESCE(l.telefono, '') as telefono, 
+                                COALESCE(l.email, '') as email,
+                                c.id_comercio
+                        FROM locales l
+                        INNER JOIN usuario_locales ul ON l.id_local = ul.id_local
+                        INNER JOIN comercios c ON l.id_comercio = c.id_comercio
+                        WHERE ul.id_usuario = @IdUsuario
+                        ORDER BY ul.es_principal DESC, l.nombre_local";
 
             using var cmd = new NpgsqlCommand(query, connection);
             cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
@@ -933,17 +998,40 @@ public partial class ManageUsersViewModel : ObservableObject
                         IdLocal = reader.GetInt32(0),
                         CodigoLocal = reader.GetString(1),
                         NombreLocal = reader.GetString(2),
-                        Direccion = reader.GetString(3)
+                        TipoVia = reader.GetString(3),
+                        Direccion = reader.GetString(4),
+                        LocalNumero = reader.GetString(5),
+                        Escalera = string.IsNullOrEmpty(reader.GetString(6)) ? null : reader.GetString(6),
+                        Piso = string.IsNullOrEmpty(reader.GetString(7)) ? null : reader.GetString(7),
+                        CodigoPostal = reader.GetString(8),
+                        Pais = reader.GetString(9),
+                        Telefono = string.IsNullOrEmpty(reader.GetString(10)) ? null : reader.GetString(10),
+                        Email = string.IsNullOrEmpty(reader.GetString(11)) ? null : reader.GetString(11),
+                        IdComercio = reader.GetInt32(12)
                     });
                 }
             }
             catch
             {
-                // Si la tabla no existe, cargar solo el local principal del usuario
+                // Si falla usuario_locales, cargar solo el local principal del usuario
                 if (UsuarioSeleccionado != null && UsuarioSeleccionado.IdLocal > 0)
                 {
-                    var queryLocal = @"SELECT id_local, codigo_local, nombre_local, direccion
-                                      FROM locales WHERE id_local = @IdLocal";
+                    var queryLocal = @"SELECT l.id_local, 
+                                            l.codigo_local, 
+                                            l.nombre_local,
+                                            l.tipo_via, 
+                                            l.direccion, 
+                                            l.local_numero, 
+                                            l.escalera, 
+                                            l.piso,
+                                            l.codigo_postal, 
+                                            l.pais, 
+                                            l.telefono, 
+                                            l.email,
+                                            l.id_comercio
+                                    FROM locales l 
+                                    WHERE id_local = @IdLocal";
+                                    
                     using var cmdLocal = new NpgsqlCommand(queryLocal, connection);
                     cmdLocal.Parameters.AddWithValue("@IdLocal", UsuarioSeleccionado.IdLocal);
                     
@@ -955,15 +1043,56 @@ public partial class ManageUsersViewModel : ObservableObject
                             IdLocal = readerLocal.GetInt32(0),
                             CodigoLocal = readerLocal.GetString(1),
                             NombreLocal = readerLocal.GetString(2),
-                            Direccion = readerLocal.GetString(3)
+                            TipoVia = readerLocal.IsDBNull(3) ? string.Empty : readerLocal.GetString(3),
+                            Direccion = readerLocal.IsDBNull(4) ? string.Empty : readerLocal.GetString(4),
+                            LocalNumero = readerLocal.IsDBNull(5) ? string.Empty : readerLocal.GetString(5),
+                            Escalera = readerLocal.IsDBNull(6) ? null : readerLocal.GetString(6),
+                            Piso = readerLocal.IsDBNull(7) ? null : readerLocal.GetString(7),
+                            CodigoPostal = readerLocal.IsDBNull(8) ? string.Empty : readerLocal.GetString(8),
+                            Pais = readerLocal.IsDBNull(9) ? string.Empty : readerLocal.GetString(9),
+                            Telefono = readerLocal.IsDBNull(10) ? null : readerLocal.GetString(10),
+                            Email = readerLocal.IsDBNull(11) ? null : readerLocal.GetString(11),
+                            IdComercio = readerLocal.GetInt32(12)
                         });
                     }
                 }
             }
+
+            ActualizarTipoEmpleado();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error al cargar locales asignados: {ex.Message}");
+        }
+    }
+
+    private async Task CargarLocalesDisponiblesDesdeDB()
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(ConnectionString);
+            await connection.OpenAsync();
+
+            var query = "SELECT DISTINCT codigo_local FROM locales WHERE activo = true ORDER BY codigo_local";
+            using var cmd = new NpgsqlCommand(query, connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            LocalesDisponibles.Clear();
+            LocalesDisponibles.Add("Todos");
+
+            while (await reader.ReadAsync())
+            {
+                var codigo = reader.GetString(0);
+                if (!string.IsNullOrEmpty(codigo))
+                {
+                    LocalesDisponibles.Add(codigo);
+                }
+            }
+        }
+        catch
+        {
+            // Si falla, cargar desde usuarios cargados
+            CargarLocalesDisponibles();
         }
     }
 
@@ -972,13 +1101,43 @@ public partial class ManageUsersViewModel : ObservableObject
         LocalesDisponibles.Clear();
         LocalesDisponibles.Add("Todos");
 
-        var locales = Usuarios.Select(u => u.NombreLocal).Distinct().OrderBy(l => l);
+        var locales = Usuarios.Select(u => u.CodigoLocal).Distinct().OrderBy(l => l);
         foreach (var local in locales)
         {
-            if (!string.IsNullOrEmpty(local) && local != "Sin asignar")
+            if (!string.IsNullOrEmpty(local) && local != "N/A" && local != "Sin asignar")
             {
                 LocalesDisponibles.Add(local);
             }
+        }
+    }
+
+    private async Task CargarComerciosDisponiblesDesdeDB()
+    {
+        try
+        {
+            using var connection = new NpgsqlConnection(ConnectionString);
+            await connection.OpenAsync();
+
+            var query = "SELECT DISTINCT nombre_comercio FROM comercios WHERE activo = true ORDER BY nombre_comercio";
+            using var cmd = new NpgsqlCommand(query, connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            ComerciosDisponibles.Clear();
+            ComerciosDisponibles.Add("Todos");
+
+            while (await reader.ReadAsync())
+            {
+                var nombre = reader.GetString(0);
+                if (!string.IsNullOrEmpty(nombre))
+                {
+                    ComerciosDisponibles.Add(nombre);
+                }
+            }
+        }
+        catch
+        {
+            // Si falla, cargar desde usuarios cargados
+            CargarComerciosDisponibles();
         }
     }
 
@@ -999,13 +1158,11 @@ public partial class ManageUsersViewModel : ObservableObject
 
     private async Task InicializarFiltros()
     {
-        // Esperar un momento para que termine de cargar todo
         await Task.Delay(100);
 
-        CargarLocalesDisponibles();
-        CargarComerciosDisponibles();
+        await CargarLocalesDisponiblesDesdeDB();
+        await CargarComerciosDisponiblesDesdeDB();
 
-        // Inicializar con todos los usuarios
         UsuariosFiltrados.Clear();
         foreach (var usuario in Usuarios.OrderBy(u => u.NombreCompleto))
         {
@@ -1013,16 +1170,21 @@ public partial class ManageUsersViewModel : ObservableObject
         }
     }
 
-    // Observar cambios en FormEsFlotante para actualizar automáticamente
-    partial void OnFormEsFlotanteChanged(bool value)
+    private async void MostrarMensajeExitoNotificacion(string mensaje)
     {
-        // Si desmarca flotante y tiene múltiples locales, avisar
-        if (!value && LocalesAsignados.Count > 1)
-        {
-            // Mantener solo el primer local
-            var primerLocal = LocalesAsignados.First();
-            LocalesAsignados.Clear();
-            LocalesAsignados.Add(primerLocal);
-        }
+        MensajeExitoColor = "#28a745";
+        MensajeExito = mensaje;
+        MostrarMensajeExito = true;
+        await Task.Delay(3000);
+        MostrarMensajeExito = false;
+    }
+
+    private async void MostrarMensajeError(string mensaje)
+    {
+        MensajeExitoColor = "#dc3545";
+        MensajeExito = $"❌ {mensaje}";
+        MostrarMensajeExito = true;
+        await Task.Delay(5000);
+        MostrarMensajeExito = false;
     }
 }
