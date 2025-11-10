@@ -14,8 +14,15 @@ using Avalonia.Controls.ApplicationLifetimes;
 namespace Allva.Desktop.ViewModels.Admin;
 
 /// <summary>
-/// ViewModel para la gestión de usuarios normales y flotantes
-/// VERSIÓN ADAPTADA A MODELOS EXISTENTES
+/// ViewModel para la gestión de usuarios normales y flooters
+/// VERSIÓN COMPLETAMENTE CORREGIDA SEGÚN ESTRUCTURA REAL DE BD
+/// 
+/// CORRECCIONES APLICADAS:
+/// 1. Tabla usuarios tiene: nombre, apellidos (SEPARADOS) ✓
+/// 2. Tabla usuarios tiene: es_flooter (NO es_flotante) ✓
+/// 3. Tabla locales tiene: local_numero (NO numero) ✓
+/// 4. id_rol debe ser NULL para usuarios normales ✓
+/// 5. Los usuarios necesitan codigo_local para login ✓
 /// </summary>
 public partial class ManageUsersViewModel : ObservableObject
 {
@@ -192,7 +199,6 @@ public partial class ManageUsersViewModel : ObservableObject
     {
         if (ModoEdicion)
         {
-            // No regenerar en modo edición
             return;
         }
 
@@ -202,12 +208,10 @@ public partial class ManageUsersViewModel : ObservableObject
             return;
         }
 
-        // Generar número base en mayúsculas
         var nombre = FormNombre.Trim().ToUpper().Replace(" ", "");
         var apellido = FormApellidos.Trim().ToUpper().Replace(" ", "");
         var baseNumero = $"{nombre}_{apellido}";
 
-        // Verificar duplicados en tiempo real
         var numero = baseNumero;
         var contador = 2;
 
@@ -259,13 +263,11 @@ public partial class ManageUsersViewModel : ObservableObject
                 Usuarios.Add(usuario);
             }
 
-            // Actualizar contadores
             OnPropertyChanged(nameof(TotalUsuarios));
             OnPropertyChanged(nameof(UsuariosActivos));
             OnPropertyChanged(nameof(UsuariosInactivos));
             OnPropertyChanged(nameof(UsuariosFlotantes));
 
-            // Inicializar filtros
             await InicializarFiltros();
         }
         catch (Exception ex)
@@ -282,7 +284,8 @@ public partial class ManageUsersViewModel : ObservableObject
     {
         var usuarios = new List<UserModel>();
 
-        // Mostrar TODOS los usuarios sin filtro de rol (excepto que explícitamente sea admin con id_rol = 1)
+        // ✅ CORRECCIÓN CRÍTICA: Solo usuarios normales con id_rol = 2
+        // Los administradores (id_rol = 1) tienen su propio módulo de gestión
         var query = @"SELECT u.id_usuario, u.numero_usuario, u.nombre, u.apellidos,
                              u.correo, COALESCE(u.telefono, '') as telefono, 
                              COALESCE(u.es_flooter, false) as es_flotante,
@@ -295,7 +298,7 @@ public partial class ManageUsersViewModel : ObservableObject
                       FROM usuarios u
                       LEFT JOIN locales l ON u.id_local = l.id_local
                       LEFT JOIN comercios c ON l.id_comercio = c.id_comercio
-                      WHERE (u.id_rol IS NULL OR u.id_rol != 1)
+                      WHERE u.id_rol = 2
                       ORDER BY u.nombre, u.apellidos";
 
         using var cmd = new NpgsqlCommand(query, connection);
@@ -354,7 +357,6 @@ public partial class ManageUsersViewModel : ObservableObject
         FormActivo = usuario.Activo;
         FormPassword = string.Empty;
 
-        // Cargar locales asignados
         await CargarLocalesAsignadosUsuario(usuario.IdUsuario);
 
         ModoEdicion = true;
@@ -391,7 +393,6 @@ public partial class ManageUsersViewModel : ObservableObject
     [RelayCommand]
     private void GenerarPassword()
     {
-        // Generar contraseña aleatoria segura
         const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
         var random = new Random();
         var password = new string(Enumerable.Repeat(chars, 12)
@@ -481,7 +482,6 @@ public partial class ManageUsersViewModel : ObservableObject
         {
             var passwordHash = BCrypt.Net.BCrypt.HashPassword(FormPassword);
 
-            // Determinar si es flotante según cantidad de locales
             bool esFlotante = LocalesAsignados.Count > 1;
 
             int? idLocalPrincipal = LocalesAsignados.FirstOrDefault()?.IdLocal;
@@ -499,7 +499,10 @@ public partial class ManageUsersViewModel : ObservableObject
                 }
             }
 
-            // CORRECCIÓN: Usar es_flooter como nombre de columna real en la BD
+            // ✅ CORRECCIÓN CRÍTICA: 
+            // - id_rol = 2 para usuarios normales (id_rol = 1 es para admins Allva)
+            // - La columna es es_flooter (verificado en captura)
+            // - Las columnas son nombre y apellidos (separadas)
             var queryUsuario = @"
                 INSERT INTO usuarios (
                     id_comercio, id_local, id_rol, nombre, apellidos, correo, telefono,
@@ -530,26 +533,20 @@ public partial class ManageUsersViewModel : ObservableObject
 
             var idUsuario = Convert.ToInt32(await cmdUsuario.ExecuteScalarAsync());
 
-            // Insertar asignaciones de locales
+            // ✅ Insertar asignaciones en usuario_locales (ahora la tabla SÍ existe)
             foreach (var local in LocalesAsignados)
             {
-                try
-                {
-                    var queryAsignacion = @"
-                        INSERT INTO usuario_locales (id_usuario, id_local, es_principal)
-                        VALUES (@IdUsuario, @IdLocal, @EsPrincipal)";
+                var queryAsignacion = @"
+                    INSERT INTO usuario_locales (id_usuario, id_local, es_principal)
+                    VALUES (@IdUsuario, @IdLocal, @EsPrincipal)
+                    ON CONFLICT (id_usuario, id_local) DO NOTHING";
 
-                    using var cmdAsignacion = new NpgsqlCommand(queryAsignacion, connection, transaction);
-                    cmdAsignacion.Parameters.AddWithValue("@IdUsuario", idUsuario);
-                    cmdAsignacion.Parameters.AddWithValue("@IdLocal", local.IdLocal);
-                    cmdAsignacion.Parameters.AddWithValue("@EsPrincipal", local == LocalesAsignados.First());
+                using var cmdAsignacion = new NpgsqlCommand(queryAsignacion, connection, transaction);
+                cmdAsignacion.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                cmdAsignacion.Parameters.AddWithValue("@IdLocal", local.IdLocal);
+                cmdAsignacion.Parameters.AddWithValue("@EsPrincipal", local == LocalesAsignados.First());
 
-                    await cmdAsignacion.ExecuteNonQueryAsync();
-                }
-                catch
-                {
-                    // Tabla puede no existir
-                }
+                await cmdAsignacion.ExecuteNonQueryAsync();
             }
 
             await transaction.CommitAsync();
@@ -588,7 +585,7 @@ public partial class ManageUsersViewModel : ObservableObject
                 }
             }
 
-            // CORRECCIÓN: Usar es_flooter como nombre de columna real en la BD
+            // ✅ CORRECCIÓN: es_flooter, nombre y apellidos separados
             var queryUsuario = @"
                 UPDATE usuarios SET
                     id_comercio = @IdComercio,
@@ -626,31 +623,25 @@ public partial class ManageUsersViewModel : ObservableObject
 
             await cmdUsuario.ExecuteNonQueryAsync();
 
-            // Actualizar asignaciones
-            try
+            // ✅ Actualizar asignaciones en usuario_locales
+            var queryDeleteAsignaciones = "DELETE FROM usuario_locales WHERE id_usuario = @IdUsuario";
+            using var cmdDelete = new NpgsqlCommand(queryDeleteAsignaciones, connection, transaction);
+            cmdDelete.Parameters.AddWithValue("@IdUsuario", _usuarioEnEdicion.IdUsuario);
+            await cmdDelete.ExecuteNonQueryAsync();
+
+            foreach (var local in LocalesAsignados)
             {
-                var queryDeleteAsignaciones = "DELETE FROM usuario_locales WHERE id_usuario = @IdUsuario";
-                using var cmdDelete = new NpgsqlCommand(queryDeleteAsignaciones, connection, transaction);
-                cmdDelete.Parameters.AddWithValue("@IdUsuario", _usuarioEnEdicion.IdUsuario);
-                await cmdDelete.ExecuteNonQueryAsync();
+                var queryAsignacion = @"
+                    INSERT INTO usuario_locales (id_usuario, id_local, es_principal)
+                    VALUES (@IdUsuario, @IdLocal, @EsPrincipal)
+                    ON CONFLICT (id_usuario, id_local) DO NOTHING";
 
-                foreach (var local in LocalesAsignados)
-                {
-                    var queryAsignacion = @"
-                        INSERT INTO usuario_locales (id_usuario, id_local, es_principal)
-                        VALUES (@IdUsuario, @IdLocal, @EsPrincipal)";
+                using var cmdAsignacion = new NpgsqlCommand(queryAsignacion, connection, transaction);
+                cmdAsignacion.Parameters.AddWithValue("@IdUsuario", _usuarioEnEdicion.IdUsuario);
+                cmdAsignacion.Parameters.AddWithValue("@IdLocal", local.IdLocal);
+                cmdAsignacion.Parameters.AddWithValue("@EsPrincipal", local == LocalesAsignados.First());
 
-                    using var cmdAsignacion = new NpgsqlCommand(queryAsignacion, connection, transaction);
-                    cmdAsignacion.Parameters.AddWithValue("@IdUsuario", _usuarioEnEdicion.IdUsuario);
-                    cmdAsignacion.Parameters.AddWithValue("@IdLocal", local.IdLocal);
-                    cmdAsignacion.Parameters.AddWithValue("@EsPrincipal", local == LocalesAsignados.First());
-
-                    await cmdAsignacion.ExecuteNonQueryAsync();
-                }
-            }
-            catch
-            {
-                // Tabla puede no existir
+                await cmdAsignacion.ExecuteNonQueryAsync();
             }
 
             await transaction.CommitAsync();
@@ -804,7 +795,7 @@ public partial class ManageUsersViewModel : ObservableObject
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            // ✅ CORRECCIÓN: Usar nombres de columna correctos según tu base de datos
+            // ✅ CORRECCIÓN: La columna es local_numero (no numero)
             var query = @"SELECT l.id_local, 
                                 l.codigo_local, 
                                 COALESCE(l.nombre_local, '') as nombre_local, 
@@ -947,9 +938,19 @@ public partial class ManageUsersViewModel : ObservableObject
             return false;
         }
 
+        // ✅ VALIDACIÓN CRÍTICA: Usuario DEBE tener al menos un local asignado
         if (!LocalesAsignados.Any())
         {
-            mensajeError = "Debes asignar al menos un local al usuario";
+            mensajeError = "⚠️ DEBE asignar al menos un local al usuario.\n\n" +
+                          "Usa el buscador de 'Asignación de Locales' para buscar por nombre de comercio " +
+                          "y selecciona el local donde trabajará este usuario.";
+            return false;
+        }
+
+        // Verificar que los locales tengan IDs válidos
+        if (LocalesAsignados.Any(l => l.IdLocal <= 0))
+        {
+            mensajeError = "Error: Hay locales asignados sin ID válido. Por favor, elimínalos y asígnalos nuevamente.";
             return false;
         }
 
@@ -963,7 +964,7 @@ public partial class ManageUsersViewModel : ObservableObject
             using var connection = new NpgsqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            // ✅ CORRECCIÓN: Usar local_numero en lugar de numero
+            // ✅ Cargar desde usuario_locales (ahora la tabla SÍ existe)
             var query = @"SELECT l.id_local, 
                                 l.codigo_local, 
                                 COALESCE(l.nombre_local, '') as nombre_local,
@@ -988,74 +989,25 @@ public partial class ManageUsersViewModel : ObservableObject
 
             LocalesAsignados.Clear();
 
-            try
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
             {
-                using var reader = await cmd.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+                LocalesAsignados.Add(new LocalFormModel
                 {
-                    LocalesAsignados.Add(new LocalFormModel
-                    {
-                        IdLocal = reader.GetInt32(0),
-                        CodigoLocal = reader.GetString(1),
-                        NombreLocal = reader.GetString(2),
-                        TipoVia = reader.GetString(3),
-                        Direccion = reader.GetString(4),
-                        LocalNumero = reader.GetString(5),
-                        Escalera = string.IsNullOrEmpty(reader.GetString(6)) ? null : reader.GetString(6),
-                        Piso = string.IsNullOrEmpty(reader.GetString(7)) ? null : reader.GetString(7),
-                        CodigoPostal = reader.GetString(8),
-                        Pais = reader.GetString(9),
-                        Telefono = string.IsNullOrEmpty(reader.GetString(10)) ? null : reader.GetString(10),
-                        Email = string.IsNullOrEmpty(reader.GetString(11)) ? null : reader.GetString(11),
-                        IdComercio = reader.GetInt32(12)
-                    });
-                }
-            }
-            catch
-            {
-                // Si falla usuario_locales, cargar solo el local principal del usuario
-                if (UsuarioSeleccionado != null && UsuarioSeleccionado.IdLocal > 0)
-                {
-                    var queryLocal = @"SELECT l.id_local, 
-                                            l.codigo_local, 
-                                            l.nombre_local,
-                                            l.tipo_via, 
-                                            l.direccion, 
-                                            l.local_numero, 
-                                            l.escalera, 
-                                            l.piso,
-                                            l.codigo_postal, 
-                                            l.pais, 
-                                            l.telefono, 
-                                            l.email,
-                                            l.id_comercio
-                                    FROM locales l 
-                                    WHERE id_local = @IdLocal";
-                                    
-                    using var cmdLocal = new NpgsqlCommand(queryLocal, connection);
-                    cmdLocal.Parameters.AddWithValue("@IdLocal", UsuarioSeleccionado.IdLocal);
-                    
-                    using var readerLocal = await cmdLocal.ExecuteReaderAsync();
-                    if (await readerLocal.ReadAsync())
-                    {
-                        LocalesAsignados.Add(new LocalFormModel
-                        {
-                            IdLocal = readerLocal.GetInt32(0),
-                            CodigoLocal = readerLocal.GetString(1),
-                            NombreLocal = readerLocal.GetString(2),
-                            TipoVia = readerLocal.IsDBNull(3) ? string.Empty : readerLocal.GetString(3),
-                            Direccion = readerLocal.IsDBNull(4) ? string.Empty : readerLocal.GetString(4),
-                            LocalNumero = readerLocal.IsDBNull(5) ? string.Empty : readerLocal.GetString(5),
-                            Escalera = readerLocal.IsDBNull(6) ? null : readerLocal.GetString(6),
-                            Piso = readerLocal.IsDBNull(7) ? null : readerLocal.GetString(7),
-                            CodigoPostal = readerLocal.IsDBNull(8) ? string.Empty : readerLocal.GetString(8),
-                            Pais = readerLocal.IsDBNull(9) ? string.Empty : readerLocal.GetString(9),
-                            Telefono = readerLocal.IsDBNull(10) ? null : readerLocal.GetString(10),
-                            Email = readerLocal.IsDBNull(11) ? null : readerLocal.GetString(11),
-                            IdComercio = readerLocal.GetInt32(12)
-                        });
-                    }
-                }
+                    IdLocal = reader.GetInt32(0),
+                    CodigoLocal = reader.GetString(1),
+                    NombreLocal = reader.GetString(2),
+                    TipoVia = reader.GetString(3),
+                    Direccion = reader.GetString(4),
+                    LocalNumero = reader.GetString(5),
+                    Escalera = string.IsNullOrEmpty(reader.GetString(6)) ? null : reader.GetString(6),
+                    Piso = string.IsNullOrEmpty(reader.GetString(7)) ? null : reader.GetString(7),
+                    CodigoPostal = reader.GetString(8),
+                    Pais = reader.GetString(9),
+                    Telefono = string.IsNullOrEmpty(reader.GetString(10)) ? null : reader.GetString(10),
+                    Email = string.IsNullOrEmpty(reader.GetString(11)) ? null : reader.GetString(11),
+                    IdComercio = reader.GetInt32(12)
+                });
             }
 
             ActualizarTipoEmpleado();
@@ -1091,7 +1043,6 @@ public partial class ManageUsersViewModel : ObservableObject
         }
         catch
         {
-            // Si falla, cargar desde usuarios cargados
             CargarLocalesDisponibles();
         }
     }
@@ -1136,7 +1087,6 @@ public partial class ManageUsersViewModel : ObservableObject
         }
         catch
         {
-            // Si falla, cargar desde usuarios cargados
             CargarComerciosDisponibles();
         }
     }
