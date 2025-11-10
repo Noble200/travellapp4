@@ -6,10 +6,19 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    
+    <!-- Configuración del icono de la aplicación -->
+    <ApplicationIcon>Assets\allva-icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    
+    <!-- Incluir el icono como contenido -->
+    <None Remove="Assets\allva-icon.ico" />
+    <Content Include="Assets\allva-icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

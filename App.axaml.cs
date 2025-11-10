@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using Allva.Desktop.Services;
@@ -40,7 +41,8 @@ namespace Allva.Desktop
                     Height = 700,
                     WindowStartupLocation = WindowStartupLocation.CenterScreen,
                     CanResize = true,
-                    Content = loginView  // UserControl como contenido
+                    Content = loginView,  // UserControl como contenido
+                    Icon = CargarIcono()  // Icono de la aplicación
                 };
 
                 desktop.MainWindow = mainWindow;
@@ -61,6 +63,20 @@ namespace Allva.Desktop
             services.AddTransient<LoginViewModel>();
 
             Services = services.BuildServiceProvider();
+        }
+
+        private WindowIcon? CargarIcono()
+        {
+            try
+            {
+                var uri = new Uri("avares://Allva.Desktop/Assets/allva-icon.ico");
+                return new WindowIcon(AssetLoader.Open(uri));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"No se pudo cargar el icono: {ex.Message}");
+                return null;
+            }
         }
     }
 }

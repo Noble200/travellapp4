@@ -48,26 +48,6 @@
                               Text="{Binding Localization[Login_Title]}"
                               HorizontalAlignment="Center"/>
 
-                    <!-- Mensaje de error -->
-                    <Border Classes="mensajeError" 
-                            IsVisible="{Binding MostrarError}">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Path Grid.Column="0" 
-                                  Data="M12,8 L12,12 M12,16 L12,16 M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z"
-                                  Stroke="#D32F2F"
-                                  StrokeThickness="2"
-                                  StrokeLineCap="Round"
-                                  Fill="Transparent"
-                                  Width="18"
-                                  Height="18"
-                                  Margin="0,0,10,0"/>
-                            <TextBlock Grid.Column="1" 
-                                      Text="{Binding MensajeError}"
-                                      TextWrapping="Wrap"
-                                      Classes="textoError"/>
-                        </Grid>
-                    </Border>
-
                     <!-- Formulario -->
                     <StackPanel Spacing="20">
                         
@@ -79,19 +59,7 @@
                                     Text="{Binding NumeroUsuario}"
                                     Watermark="{Binding Localization[Login_UserPlaceholder]}"
                                     IsEnabled="{Binding !IsLoading}"
-                                    HorizontalAlignment="Stretch">
-                                <TextBox.InnerLeftContent>
-                                    <Border Margin="10,0,0,0">
-                                        <Path Data="M12,4 C14.21,4 16,5.79 16,8 C16,10.21 14.21,12 12,12 C9.79,12 8,10.21 8,8 C8,5.79 9.79,4 12,4 Z M5,20 L19,20 C19,16 16,14 12,14 C8,14 5,16 5,20 Z"
-                                              Stroke="#666666"
-                                              StrokeThickness="1.5"
-                                              StrokeLineCap="Round"
-                                              Fill="Transparent"
-                                              Width="18"
-                                              Height="18"/>
-                                    </Border>
-                                </TextBox.InnerLeftContent>
-                            </TextBox>
+                                    HorizontalAlignment="Stretch"/>
                         </StackPanel>
 
                         <!-- Campo: Código Local -->
@@ -102,19 +70,7 @@
                                     Text="{Binding CodigoLocal}"
                                     Watermark="{Binding Localization[Login_OfficePlaceholder]}"
                                     IsEnabled="{Binding !IsLoading}"
-                                    HorizontalAlignment="Stretch">
-                                <TextBox.InnerLeftContent>
-                                    <Border Margin="10,0,0,0">
-                                        <Path Data="M3,9 L21,9 L21,20 C21,20.55 20.55,21 20,21 L4,21 C3.45,21 3,20.55 3,20 L3,9 Z M8,5 L8,7 M12,5 L12,7 M16,5 L16,7 M3,5 L21,5 C21.55,5 22,5.45 22,6 L22,8 C22,8.55 21.55,9 21,9 L3,9 C2.45,9 2,8.55 2,8 L2,6 C2,5.45 2.45,5 3,5 Z"
-                                              Stroke="#666666"
-                                              StrokeThickness="1.5"
-                                              StrokeLineCap="Round"
-                                              Fill="Transparent"
-                                              Width="18"
-                                              Height="18"/>
-                                    </Border>
-                                </TextBox.InnerLeftContent>
-                            </TextBox>
+                                    HorizontalAlignment="Stretch"/>
                         </StackPanel>
 
                         <!-- Campo: Contraseña -->
@@ -126,26 +82,8 @@
                                     PasswordChar="●"
                                     Watermark="{Binding Localization[Login_PasswordPlaceholder]}"
                                     IsEnabled="{Binding !IsLoading}"
-                                    HorizontalAlignment="Stretch">
-                                <TextBox.InnerLeftContent>
-                                    <Border Margin="10,0,0,0">
-                                        <Path Data="M6,10 L6,8 C6,5.79 7.79,4 10,4 L14,4 C16.21,4 18,5.79 18,8 L18,10 M12,16 C13.1,16 14,15.1 14,14 C14,12.9 13.1,12 12,12 C10.9,12 10,12.9 10,14 C10,15.1 10.9,16 12,16 Z M4,10 L20,10 C21.1,10 22,10.9 22,12 L22,20 C22,21.1 21.1,22 20,22 L4,22 C2.9,22 2,21.1 2,20 L2,12 C2,10.9 2.9,10 4,10 Z"
-                                              Stroke="#666666"
-                                              StrokeThickness="1.5"
-                                              StrokeLineCap="Round"
-                                              Fill="Transparent"
-                                              Width="18"
-                                              Height="18"/>
-                                    </Border>
-                                </TextBox.InnerLeftContent>
-                            </TextBox>
+                                    HorizontalAlignment="Stretch"/>
                         </StackPanel>
-
-                        <!-- Checkbox: Recordar sesión -->
-                        <CheckBox Content="{Binding Localization[Login_Remember]}"
-                                 IsChecked="{Binding RecordarSesion}"
-                                 Classes="checkboxRecordar"
-                                 IsEnabled="{Binding !IsLoading}"/>
 
                     </StackPanel>
 
@@ -240,18 +178,12 @@
                             Content="{Binding Localization[Login_ForgotPassword]}"/>
 
                     <!-- Versión -->
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
-                            <TextBlock Classes="textoVersion"
-                                      Text="{Binding Localization[Login_Version]}"/>
-                            <TextBlock Classes="textoVersion"
-                                      Text="1.0.0"/>
-                        </StackPanel>
-                        <Button Grid.Column="1"
-                               Classes="btnSoporte"
-                               Content="{Binding Localization[Login_Support]}"
-                               HorizontalAlignment="Right"/>
-                    </Grid>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBlock Classes="textoVersion"
+                                  Text="{Binding Localization[Login_Version]}"/>
+                        <TextBlock Classes="textoVersion"
+                                  Text="1.0.0"/>
+                    </StackPanel>
 
                 </StackPanel>
             </Border>
